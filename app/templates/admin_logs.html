@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_title }} - 활동 로그</title>
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <style>
+        .page-wrap {
+            padding: 18px;
+        }
+
+        .card-box {
+            margin-top: 16px;
+            background: #fff;
+            border: 1px solid #dfe6ef;
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 0.8fr 0.7fr auto;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 14px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .field input,
+        .field select {
+            height: 40px;
+            border: 1px solid #cfd8e3;
+            border-radius: 10px;
+            padding: 0 12px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .log-table-wrap {
+            overflow: auto;
+            max-height: 700px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+        }
+
+        table.log-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1100px;
+        }
+
+        .log-table th,
+        .log-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #edf2f7;
+            text-align: left;
+            vertical-align: top;
+            font-size: 14px;
+        }
+
+        .log-table th {
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .badge-result {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-result.success {
+            background: #ecfdf5;
+            color: #166534;
+        }
+
+        .badge-result.failed {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .badge-result.error {
+            background: #fff7ed;
+            color: #9a3412;
+        }
+
+        .message-box {
+            min-height: 22px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .message-box.ok {
+            color: #166534;
+        }
+
+        .message-box.error {
+            color: #b91c1c;
+        }
+
+        @media (max-width: 1200px) {
+            .filter-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell page-wrap">
+        <div class="topbar">
+            <div class="title-wrap">
+                <h2>{{ app_title }} - 활동 로그</h2>
+                <div class="meta">
+                    관리자: <strong>{{ current_user.name }} ({{ current_user.id }})</strong>
+                    &nbsp;|&nbsp; 버전: <strong>{{ app_version }}</strong>
+                    &nbsp;|&nbsp; 수정일: <strong>{{ app_last_modified }}</strong>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a class="btn btn-stage" href="/dashboard">대시보드로</a>
+                <a class="btn btn-secondary" href="/admin/users">사용자 관리</a>
+                <form method="post" action="/logout" style="margin:0;">
+                    <button class="btn btn-primary" type="submit">로그아웃</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card-box">
+            <div id="messageBox" class="message-box"></div>
+
+            <div class="filter-row">
+                <div class="field">
+                    <label for="searchText">검색</label>
+                    <input id="searchText" type="text" placeholder="actor, target, detail, ip 검색" />
+                </div>
+
+                <div class="field">
+                    <label for="eventType">이벤트</label>
+                    <select id="eventType">
+                        <option value="all">전체</option>
+                        <option value="login">login</option>
+                        <option value="logout">logout</option>
+                        <option value="change_password">change_password</option>
+                        <option value="create_user">create_user</option>
+                        <option value="update_user">update_user</option>
+                        <option value="set_user_active">set_user_active</option>
+                        <option value="reload_data">reload_data</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="resultType">결과</label>
+                    <select id="resultType">
+                        <option value="all">전체</option>
+                        <option value="success">success</option>
+                        <option value="failed">failed</option>
+                        <option value="error">error</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="limitCount">건수</label>
+                    <select id="limitCount">
+                        <option value="100">100</option>
+                        <option value="300" selected>300</option>
+                        <option value="500">500</option>
+                    </select>
+                </div>
+
+                <button id="searchBtn" class="btn btn-primary" type="button">조회</button>
+            </div>
+
+            <div class="log-table-wrap">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>시각</th>
+                            <th>이벤트</th>
+                            <th>결과</th>
+                            <th>actor</th>
+                            <th>target</th>
+                            <th>IP</th>
+                            <th>detail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <tr>
+                            <td colspan="7">불러오는 중...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const state = { logs: [] };
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function setMessage(text, isError = false) {
+            const box = document.getElementById("messageBox");
+            box.textContent = text || "";
+            box.className = "message-box " + (text ? (isError ? "error" : "ok") : "");
+        }
+
+        function getFilters() {
+            return {
+                search: document.getElementById("searchText").value.trim(),
+                event_type: document.getElementById("eventType").value,
+                result: document.getElementById("resultType").value,
+                limit: document.getElementById("limitCount").value,
+            };
+        }
+
+        async function loadLogs() {
+            setMessage("");
+            const qs = new URLSearchParams(getFilters());
+
+            const res = await fetch(`/api/admin/activity-logs?${qs.toString()}`, {
+                method: "GET",
+                credentials: "same-origin",
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                throw new Error(data.detail || data.message || "활동 로그 조회에 실패했습니다.");
+            }
+
+            state.logs = data.logs || [];
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const tbody = document.getElementById("logTableBody");
+
+            if (!state.logs.length) {
+                tbody.innerHTML = `<tr><td colspan="7">조회된 로그가 없습니다.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = state.logs.map(item => {
+                const resultClass = String(item.result || "").toLowerCase();
+                return `
+            <tr>
+                <td>${escapeHtml(item.created_at || "")}</td>
+                <td>${escapeHtml(item.event_type || "")}</td>
+                <td><span class="badge-result ${escapeHtml(resultClass)}">${escapeHtml(item.result || "")}</span></td>
+                <td>${escapeHtml(item.actor_user_id || "")}</td>
+                <td>${escapeHtml(item.target_user_id || "")}</td>
+                <td>${escapeHtml(item.ip_address || "")}</td>
+                <td>${escapeHtml(item.detail || "")}</td>
+            </tr>
+        `;
+            }).join("");
+        }
+
+        async function runSearch() {
+            try {
+                await loadLogs();
+            } catch (error) {
+                setMessage(error.message || "활동 로그를 불러오지 못했습니다.", true);
+            }
+        }
+
+        document.getElementById("searchBtn").addEventListener("click", runSearch);
+        document.getElementById("searchText").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                runSearch();
+            }
+        });
+
+        runSearch();
+    </script>
+</body>
+
+</html>

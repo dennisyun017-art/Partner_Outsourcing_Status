@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_title }} - 로그인</title>
+    <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+<div class="login-wrap">
+    <div class="login-card">
+        <h1>{{ app_title }}</h1>
+        <p>개발자 PC에서 실행 중인 임시 서버에 접속합니다.</p>
+        <form method="post" action="/login">
+            <div class="input-group">
+                <label for="user_id">ID</label>
+                <input id="user_id" name="user_id" type="text" autocomplete="username" required />
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required />
+            </div>
+            <button class="btn btn-primary" type="submit">로그인</button>
+        </form>
+        {% if error_message %}
+        <div class="login-error">{{ error_message }}</div>
+        {% endif %}
+        <div class="meta-block">
+            <div>버전: {{ app_version }}</div>
+            <div>수정일: {{ app_last_modified }}</div>
+            <div>작성자: {{ app_author }}</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

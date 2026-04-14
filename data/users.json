@@ -1,0 +1,50 @@
+{
+    "admin": {
+        "password": "psk1234",
+        "role": "admin",
+        "partner": null,
+        "name": "관리자"
+    },
+    "nawo": {
+        "password": "nawo1234",
+        "role": "partner",
+        "partner": "나우",
+        "name": "나우테크"
+    },
+    "igs": {
+        "password": "igs1234",
+        "role": "partner",
+        "partner": "이지스",
+        "name": "이지스이엔지"
+    },
+    "sent": {
+        "password": "sent1234",
+        "role": "partner",
+        "partner": "SE&T",
+        "name": "에스이앤티"
+    },
+    "asem": {
+        "password": "asem1234",
+        "role": "partner",
+        "partner": "아셈",
+        "name": "아셈테크"
+    },
+    "sam": {
+        "password": "sam1234",
+        "role": "partner",
+        "partner": "SAM",
+        "name": "에스에이엠"
+    },
+    "htc": {
+        "password": "htc1234",
+        "role": "partner",
+        "partner": "HTC",
+        "name": "에이치티씨솔루션"
+    },
+    "geumsong": {
+        "password": "geumsong1234",
+        "role": "partner",
+        "partner": "금송",
+        "name": "Geumsong"
+    }
+}

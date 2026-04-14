@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_title }} - 사용자 관리</title>
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <style>
+        .admin-page {
+            padding: 18px;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 0.9fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .admin-card {
+            background: #fff;
+            border: 1px solid #dfe6ef;
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .admin-title {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .filter-row,
+        .form-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .filter-row {
+            grid-template-columns: 1.2fr 0.7fr 0.7fr auto auto;
+            align-items: end;
+            margin-bottom: 14px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .field input,
+        .field select {
+            height: 40px;
+            border: 1px solid #cfd8e3;
+            border-radius: 10px;
+            padding: 0 12px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .user-table-wrap {
+            overflow: auto;
+            max-height: 650px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+        }
+
+        table.user-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 920px;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #edf2f7;
+            text-align: left;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+
+        .user-table th {
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge-role {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .badge-active {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-active.active {
+            background: #ecfdf5;
+            color: #166534;
+        }
+
+        .badge-active.inactive {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .helper {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .message-box {
+            min-height: 22px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .message-box.ok {
+            color: #166534;
+        }
+
+        .message-box.error {
+            color: #b91c1c;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-link {
+            text-decoration: none;
+        }
+
+        @media (max-width: 1200px) {
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell admin-page">
+        <div class="topbar">
+            <div class="title-wrap">
+                <h2>{{ app_title }} - 사용자 관리</h2>
+                <div class="meta">
+                    기준일: <strong>{{ meta.base_date }}</strong>
+                    &nbsp;|&nbsp; 로드시각: <strong>{{ meta.loaded_at }}</strong>
+                    &nbsp;|&nbsp; 버전: <strong>{{ app_version }}</strong>
+                    &nbsp;|&nbsp; 수정일: <strong>{{ app_last_modified }}</strong>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <a class="btn btn-stage btn-link" href="/dashboard">대시보드로</a>
+                <form method="post" action="/logout" style="margin:0;">
+                    <button class="btn btn-primary" type="submit">로그아웃</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="admin-grid">
+            <div class="admin-card">
+                <h3 class="admin-title">사용자 목록</h3>
+
+                <div id="messageBox" class="message-box"></div>
+
+                <div class="filter-row">
+                    <div class="field">
+                        <label for="searchText">검색</label>
+                        <input id="searchText" type="text" placeholder="user_id, 이름, 협력사 검색" />
+                    </div>
+                    <div class="field">
+                        <label for="filterRole">권한</label>
+                        <select id="filterRole">
+                            <option value="all">전체</option>
+                            <option value="admin">admin</option>
+                            <option value="partner">partner</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="filterActive">사용 여부</label>
+                        <select id="filterActive">
+                            <option value="all">전체</option>
+                            <option value="active">활성</option>
+                            <option value="inactive">비활성</option>
+                        </select>
+                    </div>
+                    <button id="searchBtn" class="btn btn-secondary" type="button">조회</button>
+                    <button id="newBtn" class="btn btn-primary" type="button">신규 사용자</button>
+                </div>
+
+                <div class="helper">권장 규칙: user_id 는 생성 후 수정하지 않고, 비활성 처리로 관리해.</div>
+
+                <div class="user-table-wrap" style="margin-top:12px;">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>user_id</th>
+                                <th>이름</th>
+                                <th>권한</th>
+                                <th>협력사</th>
+                                <th>상태</th>
+                                <th>수정일</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td colspan="7">불러오는 중...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h3 id="formTitle" class="admin-title">신규 사용자 추가</h3>
+
+                <form id="userForm">
+                    <input type="hidden" id="formMode" value="create" />
+                    <input type="hidden" id="originalUserId" value="" />
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="userId">user_id</label>
+                            <input id="userId" name="user_id" type="text" placeholder="예: admin01" />
+                        </div>
+
+                        <div class="field">
+                            <label for="password">password</label>
+                            <input id="password" name="password" type="text" placeholder="수정 시 공란이면 기존 유지" />
+                        </div>
+
+                        <div class="field">
+                            <label for="name">이름</label>
+                            <input id="name" name="name" type="text" placeholder="예: 홍길동" />
+                        </div>
+
+                        <div class="field">
+                            <label for="role">권한</label>
+                            <select id="role" name="role">
+                                <option value="admin">admin</option>
+                                <option value="partner">partner</option>
+                            </select>
+                        </div>
+
+                        <div class="field full">
+                            <label for="partner">협력사</label>
+                            <input id="partner" name="partner" type="text" placeholder="partner 권한일 때 입력 권장" />
+                        </div>
+
+                        <div class="field full">
+                            <label for="isActive">사용 여부</label>
+                            <select id="isActive" name="is_active">
+                                <option value="true">활성</option>
+                                <option value="false">비활성</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="helper" id="passwordHelper">
+                        신규 생성 시 비밀번호는 필수야. 수정 시 비워두면 기존 비밀번호를 유지해.
+                    </div>
+
+                    <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+                        <button id="saveBtn" class="btn btn-primary" type="submit">저장</button>
+                        <button id="resetBtn" class="btn btn-secondary" type="button">초기화</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            users: [],
+            currentUserId: "{{ current_user.id if current_user else '' }}",
+        };
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function setMessage(text, isError = false) {
+            const box = document.getElementById("messageBox");
+            box.textContent = text || "";
+            box.className = "message-box " + (text ? (isError ? "error" : "ok") : "");
+        }
+
+        function getFilters() {
+            return {
+                search: document.getElementById("searchText").value.trim(),
+                role: document.getElementById("filterRole").value,
+                active: document.getElementById("filterActive").value,
+            };
+        }
+
+        async function loadUsers() {
+            setMessage("");
+            const filters = getFilters();
+            const qs = new URLSearchParams(filters);
+
+            const res = await fetch(`/api/admin/users?${qs.toString()}`, {
+                method: "GET",
+                credentials: "same-origin",
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                throw new Error(data.detail || data.message || "사용자 목록 조회에 실패했습니다.");
+            }
+
+            state.users = data.users || [];
+            renderUserTable();
+        }
+
+        function renderUserTable() {
+            const tbody = document.getElementById("userTableBody");
+
+            if (!state.users.length) {
+                tbody.innerHTML = `<tr><td colspan="7">조회된 사용자가 없습니다.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = state.users.map(user => {
+                const isSelf = (user.user_id || "").toLowerCase() === (state.currentUserId || "").toLowerCase();
+                const activeText = user.is_active ? "활성" : "비활성";
+                const activeClass = user.is_active ? "active" : "inactive";
+                const toggleText = user.is_active ? "비활성" : "활성";
+                const safeUser = encodeURIComponent(user.user_id || "");
+
+                return `
+            <tr>
+                <td>${escapeHtml(user.user_id)}</td>
+                <td>${escapeHtml(user.name || "")}</td>
+                <td><span class="badge-role">${escapeHtml(user.role || "")}</span></td>
+                <td>${escapeHtml(user.partner || "-")}</td>
+                <td><span class="badge-active ${activeClass}">${activeText}</span></td>
+                <td>${escapeHtml(user.updated_at || "")}</td>
+                <td>
+                    <div class="row-actions">
+                        <button class="btn btn-secondary" type="button" onclick="startEdit('${safeUser}')">수정</button>
+                        <button class="btn btn-secondary" type="button" onclick="toggleActive('${safeUser}', ${user.is_active ? "false" : "true"})" ${isSelf && user.is_active ? "" : ""}>
+                            ${toggleText}
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+            }).join("");
+        }
+
+        function resetForm() {
+            document.getElementById("formMode").value = "create";
+            document.getElementById("originalUserId").value = "";
+            document.getElementById("formTitle").textContent = "신규 사용자 추가";
+
+            const userId = document.getElementById("userId");
+            userId.value = "";
+            userId.readOnly = false;
+
+            document.getElementById("password").value = "";
+            document.getElementById("name").value = "";
+            document.getElementById("role").value = "admin";
+            document.getElementById("partner").value = "";
+            document.getElementById("isActive").value = "true";
+
+            document.getElementById("passwordHelper").textContent =
+                "신규 생성 시 비밀번호는 필수야. 수정 시 비워두면 기존 비밀번호를 유지해.";
+        }
+
+        function startEdit(encodedUserId) {
+            const userId = decodeURIComponent(encodedUserId);
+            const user = state.users.find(x => (x.user_id || "").toLowerCase() === userId.toLowerCase());
+            if (!user) {
+                setMessage("수정할 사용자를 찾지 못했습니다.", true);
+                return;
+            }
+
+            document.getElementById("formMode").value = "edit";
+            document.getElementById("originalUserId").value = user.user_id || "";
+            document.getElementById("formTitle").textContent = `사용자 수정 - ${user.user_id || ""}`;
+
+            const userIdInput = document.getElementById("userId");
+            userIdInput.value = user.user_id || "";
+            userIdInput.readOnly = true;
+
+            document.getElementById("password").value = "";
+            document.getElementById("name").value = user.name || "";
+            document.getElementById("role").value = user.role || "partner";
+            document.getElementById("partner").value = user.partner || "";
+            document.getElementById("isActive").value = user.is_active ? "true" : "false";
+
+            document.getElementById("passwordHelper").textContent =
+                "수정 시 비밀번호를 비워두면 기존 비밀번호를 유지해. user_id 는 수정하지 않아.";
+        }
+
+        async function saveUser(event) {
+            event.preventDefault();
+            setMessage("");
+
+            const mode = document.getElementById("formMode").value;
+            const originalUserId = document.getElementById("originalUserId").value;
+            const userId = document.getElementById("userId").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const name = document.getElementById("name").value.trim();
+            const role = document.getElementById("role").value;
+            const partner = document.getElementById("partner").value.trim();
+            const isActive = document.getElementById("isActive").value;
+
+            if (!userId) {
+                setMessage("user_id 를 입력해.", true);
+                return;
+            }
+
+            if (mode === "create" && !password) {
+                setMessage("신규 생성 시 password 는 필수야.", true);
+                return;
+            }
+
+            if (role === "partner" && !partner) {
+                setMessage("partner 권한은 협력사명을 입력해.", true);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("user_id", userId);
+            formData.append("password", password);
+            formData.append("name", name);
+            formData.append("role", role);
+            formData.append("partner", partner);
+            formData.append("is_active", isActive);
+
+            let url = "/api/admin/users";
+            let method = "POST";
+
+            if (mode === "edit") {
+                url = `/api/admin/users/${encodeURIComponent(originalUserId)}`;
+                method = "PUT";
+            }
+
+            const res = await fetch(url, {
+                method,
+                body: formData,
+                credentials: "same-origin",
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                setMessage(data.detail || data.message || "저장에 실패했습니다.", true);
+                return;
+            }
+
+            setMessage(data.message || "저장했습니다.");
+            resetForm();
+            await loadUsers();
+        }
+
+        async function toggleActive(encodedUserId, nextValue) {
+            const userId = decodeURIComponent(encodedUserId);
+            const activate = String(nextValue) === "true";
+            const actionText = activate ? "활성" : "비활성";
+
+            if (!confirm(`${userId} 사용자를 ${actionText} 처리할까?`)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("is_active", String(activate));
+
+            const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/active`, {
+                method: "PATCH",
+                body: formData,
+                credentials: "same-origin",
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                setMessage(data.detail || data.message || "상태 변경에 실패했습니다.", true);
+                return;
+            }
+
+            setMessage(data.message || "상태를 변경했습니다.");
+            await loadUsers();
+        }
+
+        async function runSearch() {
+            try {
+                await loadUsers();
+            } catch (error) {
+                setMessage(error.message || "사용자 목록을 불러오지 못했습니다.", true);
+            }
+        }
+
+        document.getElementById("searchBtn").addEventListener("click", runSearch);
+        document.getElementById("newBtn").addEventListener("click", resetForm);
+        document.getElementById("resetBtn").addEventListener("click", resetForm);
+        document.getElementById("userForm").addEventListener("submit", saveUser);
+
+        document.getElementById("searchText").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                runSearch();
+            }
+        });
+
+        window.startEdit = startEdit;
+        window.toggleActive = toggleActive;
+
+        resetForm();
+        runSearch();
+    </script>
+</body>
+
+</html>

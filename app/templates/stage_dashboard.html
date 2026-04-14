@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_title }} - Stage 대시보드</title>
+    <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+<div id="appPage" class="app-shell stage-shell">
+    <div class="topbar">
+        <div class="title-wrap">
+            <h2 id="pageTitle">Stage 현황 Dashboard</h2>
+            <div class="meta">
+                기준일: <strong>{{ meta.base_date }}</strong>
+                &nbsp;|&nbsp; 기준: <strong>Stage 완전일치 / WO 기준 / Tuning시작일 ~ 생산완료일 / 11대 이상 경고</strong>
+                &nbsp;|&nbsp; 수정일: <strong>{{ app_last_modified }}</strong>
+            </div>
+        </div>
+        <div class="user-box">
+            <span id="userBadge" class="badge"></span>
+            <a class="btn btn-secondary" href="/dashboard">메인 대시보드</a>
+            <form method="post" action="/logout" style="margin:0;">
+                <button class="btn btn-primary" type="submit">로그아웃</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="kpis">
+        <div class="card"><div class="kpi-title">총 대상 WO</div><div id="kpiTotalWo" class="kpi-value">0</div></div>
+        <div class="card"><div class="kpi-title">최대 동시 생산</div><div id="kpiMaxCount" class="kpi-value">0</div></div>
+        <div class="card"><div class="kpi-title">경고 일수(11 이상)</div><div id="kpiWarnDays" class="kpi-value warn">0</div></div>
+        <div class="card"><div class="kpi-title">오늘 동시 생산</div><div id="kpiTodayCount" class="kpi-value">0</div></div>
+    </div>
+
+    <div class="card">
+        <div class="filters filters-4">
+            <div class="field">
+                <label>날짜 필터</label>
+                <input id="filterDate" type="date" />
+            </div>
+            <div class="field">
+                <label>경고만 보기</label>
+                <select id="filterWarnOnly">
+                    <option value="">전체</option>
+                    <option value="Y">11대 이상만</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>WO / Lot / Customer 검색</label>
+                <input id="searchText" type="text" placeholder="WO, Lot, Customer, Model" />
+            </div>
+            <div class="field">
+                <label>Stage 선택</label>
+                <select id="filterStage"></select>
+            </div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="card">
+            <h3 class="heatmap-title">캘린더형 Heatmap</h3>
+            <div class="muted" style="margin-bottom:12px;">색이 진할수록 동시 생산 대수가 많고, 11 이상은 빨강으로 표시됩니다. 날짜를 클릭하면 아래 WO 상세가 바뀝니다.</div>
+            <div style="margin-bottom:12px;">
+                <button class="btn btn-secondary" onclick="window.moveMonth(-1)">이전달</button>
+                <button class="btn btn-secondary" onclick="window.moveMonth(1)">다음달</button>
+                <span id="monthTitle" style="margin-left:10px;font-weight:700;"></span>
+            </div>
+            <div id="heatmapArea"></div>
+        </div>
+
+        <div class="card">
+            <h3 class="detail-title">날짜별 동시 생산 대수</h3>
+            <div class="muted" style="margin-bottom:12px;">행 클릭 시 해당 날짜의 WO 상세를 표시합니다.</div>
+            <div class="table-wrap stage-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>동시 생산</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 id="detailTitle" class="detail-title">WO 상세</h3>
+            <div class="table-wrap stage-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>WO</th>
+                            <th>Lot</th>
+                            <th>Customer</th>
+                            <th>Line</th>
+                            <th>Model</th>
+                            <th>Stage</th>
+                            <th>EFEM</th>
+                            <th>TM</th>
+                            <th>PM</th>
+                            <th>SU</th>
+                            <th>Harness</th>
+                            <th>Tuning</th>
+                            <th>생산시작일</th>
+                            <th>Tuning시작일</th>
+                            <th>생산완료일</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailBody"></tbody>
+                </table>
+            </div>
+            <div class="footer-meta">{{ app_title }} | {{ app_version }} | {{ app_last_modified }} | {{ app_author }}</div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.APP_BOOTSTRAP = {{ {'current_user': current_user, 'meta': meta, 'app_title': app_title, 'app_version': app_version, 'app_last_modified': app_last_modified, 'app_author': app_author}|tojson }};
+</script>
+<script src="/static/js/stage.js"></script>
+</body>
+</html>
