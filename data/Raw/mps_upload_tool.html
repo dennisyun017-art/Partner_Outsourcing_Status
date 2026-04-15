@@ -92,11 +92,26 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
         return obj;
       });
 
+      // lot 빈값 → 바로 위 행의 lot 값으로 채우기 (ffill)
+      let lastLot = null;
+      let lotFillCount = 0;
+      for (const row of allRows) {
+        if (row.lot !== null && row.lot !== undefined && row.lot !== '') {
+          lastLot = row.lot;
+        } else if (lastLot !== null) {
+          row.lot = lastLot;
+          lotFillCount++;
+        }
+      }
+
       // wo가 null인 행 제외
       const skipped = allRows.filter(r => !r.wo);
       parsedData = allRows.filter(r => r.wo);
 
       log(`✅ 파싱 완료: 전체 ${allRows.length}행 → 업로드 ${parsedData.length}행`, '#a6e3a1');
+      if (lotFillCount > 0) {
+        log(`🔄 lot 빈값 ${lotFillCount}개 → 위 행 값으로 자동 채움`, '#89dceb');
+      }
       if (skipped.length > 0) {
         log(`⚠️  wo 없는 행 ${skipped.length}개 제외됨`, '#fab387');
       }

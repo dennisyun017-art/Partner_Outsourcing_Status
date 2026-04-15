@@ -545,3 +545,40 @@
         grid-template-columns: repeat(4, minmax(100px, 1fr));
     }
 }
+
+/* 모바일: 고정 열 해제 */
+@media (max-width: 768px) {
+    .sticky-col {
+        position: static !important;
+        z-index: auto !important;
+        box-shadow: none !important;
+    }
+
+    .sticky-shadow {
+        box-shadow: none !important;
+    }
+
+    .sticky-divider {
+        box-shadow: none !important;
+    }
+
+    .table-scroll {
+        height: 480px;
+    }
+
+    /* 모바일 필터 영역 세로 정렬 */
+    .filters {
+        flex-direction: column;
+    }
+
+    /* 모바일 상단 버튼 줄바꿈 */
+    .user-box {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* 모바일 KPI 카드 2열 */
+    .kpis {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
