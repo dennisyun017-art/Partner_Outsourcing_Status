@@ -50,4 +50,7 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 
 def ensure_directories() -> None:
     for path in [DATA_DIR, RAW_DIR, REFERENCE_DIR, LOG_DIR, STATIC_DIR, TEMPLATES_DIR]:
-        path.mkdir(parents=True, exist_ok=True)
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass  # Vercel 등 읽기 전용 환경에서는 무시
