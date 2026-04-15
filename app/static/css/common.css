@@ -79,40 +79,49 @@ a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    transition: opacity 0.15s;
 }
 
+.btn:hover {
+    opacity: 0.88;
+}
+
+/* 퍼플 포인트 버튼 */
 .btn-primary {
-    background: #2563eb;
+    background: #7c3aed;
     color: #fff;
 }
 
 .btn-secondary {
-    background: #e5e7eb;
-    color: #111827;
+    background: #ede9fe;
+    color: #5b21b6;
 }
 
 .btn-stage {
-    background: #0f766e;
+    background: #7c3aed;
     color: #fff;
 }
 
-.btn-stage:hover {
-    background: #115e59;
+.btn-danger {
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 .app-shell {
     padding: 14px;
 }
 
+/* 상단바: 흰 배경 + 퍼플 좌측 보더 포인트 */
 .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    background: white;
+    background: #ffffff;
     border-radius: 18px;
     padding: 14px 16px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+    border-left: 5px solid #7c3aed;
+    box-shadow: 0 1px 4px rgba(124, 58, 237, 0.08);
     margin-bottom: 14px;
 }
 
@@ -120,6 +129,7 @@ a {
     margin: 0;
     font-size: 22px;
     font-weight: 800;
+    color: #3b0764;
 }
 
 .title-wrap .meta {
@@ -135,23 +145,28 @@ a {
     flex-wrap: wrap;
 }
 
+/* 사용자 뱃지: 퍼플 */
 .badge {
     display: inline-flex;
     align-items: center;
     padding: 8px 12px;
     border-radius: 999px;
     font-size: 13px;
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #ede9fe;
+    color: #5b21b6;
+    font-weight: 700;
 }
 
+/* 카드: 흰 배경 유지 */
 .card {
-    background: white;
+    background: #ffffff;
     border-radius: 18px;
     padding: 16px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 0.5px solid #ede9fe;
 }
 
+/* KPI 카드: 상태별 컬러 */
 .kpis {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -168,10 +183,36 @@ a {
 .kpi-value {
     font-size: 28px;
     font-weight: 800;
+    color: #3b0764;
 }
 
 .kpi-value.warn {
     color: #dc2626;
+}
+
+/* KPI 카드별 색상 */
+.kpis .card:nth-child(1) {
+    border-left: 4px solid #7c3aed;
+}
+
+.kpis .card:nth-child(2) {
+    border-left: 4px solid #6b7280;
+}
+
+.kpis .card:nth-child(3) {
+    border-left: 4px solid #2563eb;
+}
+
+.kpis .card:nth-child(4) {
+    border-left: 4px solid #f97316;
+}
+
+.kpis .card:nth-child(3) .kpi-value {
+    color: #1e40af;
+}
+
+.kpis .card:nth-child(4) .kpi-value {
+    color: #c2410c;
 }
 
 .footer-meta {
@@ -186,6 +227,7 @@ a {
     font-size: 13px;
 }
 
+/* 필터 영역 */
 .filters {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -204,17 +246,26 @@ a {
 
 .filters label {
     font-size: 12px;
-    color: #4b5563;
+    color: #5b21b6;
+    font-weight: 600;
 }
 
 .filters input,
 .filters select {
     padding: 10px 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #ddd6fe;
     border-radius: 12px;
-    background: white;
+    background: #faf5ff;
     font-size: 14px;
     height: 40px;
+    transition: border-color 0.15s;
+}
+
+.filters input:focus,
+.filters select:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
 }
 
 .toolbar-row {
@@ -229,6 +280,7 @@ a {
     margin: 0;
     font-size: 16px;
     font-weight: 800;
+    color: #3b0764;
 }
 
 @media (max-width: 1200px) {
@@ -246,5 +298,24 @@ a {
 
     .toolbar-row {
         flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .user-box {
+        gap: 6px;
     }
 }
