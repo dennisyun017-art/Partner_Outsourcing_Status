@@ -140,28 +140,28 @@ def logout(request: Request):
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard_page(request: Request):
     auth.require_user(request)
-    return templates.TemplateResponse(name="dashboard.html", context=common_context(request))
+    return templates.TemplateResponse(request=request, name="dashboard.html", context=common_context(request))
 
 
 @router.get("/stage", response_class=HTMLResponse)
 def stage_page(request: Request):
     auth.require_user(request)
-    return templates.TemplateResponse(name="stage_dashboard.html", context=common_context(request))
+    return templates.TemplateResponse(request=request, name="stage_dashboard.html", context=common_context(request))
 
 
 @router.get("/admin/users", response_class=HTMLResponse)
 def admin_users_page(request: Request):
     auth.require_admin(request)
-    return templates.TemplateResponse(name="admin_users.html", context=common_context(request))
+    return templates.TemplateResponse(request=request, name="admin_users.html", context=common_context(request))
 
 
 @router.get("/account/password", response_class=HTMLResponse)
 def account_password_page(request: Request):
     auth.require_user(request)
-    return templates.TemplateResponse(name="account_password.html", context=common_context(request))
+    return templates.TemplateResponse(request=request, name="account_password.html", context=common_context(request))
 
 
 @router.get("/admin/logs", response_class=HTMLResponse)
 def admin_logs_page(request: Request):
     auth.require_admin(request)
-    return templates.TemplateResponse(name="admin_logs.html", context=common_context(request))
+    return templates.TemplateResponse(request=request, name="admin_logs.html", context=common_context(request))
