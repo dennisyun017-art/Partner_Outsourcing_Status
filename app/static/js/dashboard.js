@@ -230,31 +230,45 @@
         const box = document.getElementById("columnToggleBox");
         box.innerHTML = "";
 
+        const bar = document.createElement("div");
+        bar.className = "column-chip-bar";
+
+        let fixedDone = false;
+
         COLUMN_CONFIGS.forEach(function (colConfig) {
             const col = colConfig.key;
 
-            const label = document.createElement("label");
-            const chk = document.createElement("input");
-            chk.type = "checkbox";
-            chk.checked = visibleColumns.has(col);
-            chk.disabled = NON_HIDEABLE_COLUMNS.has(col);
+            if (colConfig.hideable && !fixedDone) {
+                fixedDone = true;
+                const div = document.createElement("div");
+                div.className = "col-chip-divider";
+                bar.appendChild(div);
+            }
 
-            chk.onchange = function () {
-                if (chk.checked) visibleColumns.add(col);
-                else visibleColumns.delete(col);
+            const chip = document.createElement("span");
+            chip.className = "col-chip" + (NON_HIDEABLE_COLUMNS.has(col) ? " fixed" : (visibleColumns.has(col) ? " on" : ""));
+            chip.textContent = col;
+            chip.dataset.column = col;
 
-                computeColumnWidths();
-                renderTableStructure();
-                applyFilters({ preserveColumnFilterFocus: true, resetScrollTop: false });
-            };
+            if (!NON_HIDEABLE_COLUMNS.has(col)) {
+                chip.onclick = function () {
+                    if (visibleColumns.has(col)) {
+                        visibleColumns.delete(col);
+                        chip.classList.remove("on");
+                    } else {
+                        visibleColumns.add(col);
+                        chip.classList.add("on");
+                    }
+                    computeColumnWidths();
+                    renderTableStructure();
+                    applyFilters({ preserveColumnFilterFocus: true, resetScrollTop: false });
+                };
+            }
 
-            const span = document.createElement("span");
-            span.textContent = col;
-
-            label.appendChild(chk);
-            label.appendChild(span);
-            box.appendChild(label);
+            bar.appendChild(chip);
         });
+
+        box.appendChild(bar);
     }
 
     function getSortIndicator(col) {
