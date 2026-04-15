@@ -40,6 +40,9 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET_KEY,
     session_cookie=SESSION_COOKIE_NAME,
+    max_age=28800,        # 8시간 (초 단위: 8 x 60 x 60)
+    https_only=True,      # Vercel은 HTTPS만 사용
+    same_site="lax",      # 브라우저 닫으면 세션 쿠키 삭제
 )
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
