@@ -74,7 +74,8 @@ def render_login_page(
     if error_message:
         context["error_message"] = error_message
     return templates.TemplateResponse(
-        name="login.html",
-        context=context,
-        status_code=status_code,
-    )
+    request=request,
+    name="login.html",
+    context=context,
+    status_code=status_code,
+)
