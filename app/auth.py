@@ -49,3 +49,10 @@ def require_admin(request: Request) -> dict[str, Any]:
     if str(user.get("role", "")).lower() != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="관리자 권한이 필요합니다.")
     return user
+
+def require_manager(request: Request) -> dict[str, Any]:
+    user = require_user(request)
+    role = str(user.get("role", "")).lower()
+    if role not in {"admin", "manager"}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="관리자 권한이 필요합니다.")
+    return user

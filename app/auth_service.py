@@ -49,7 +49,7 @@ class AuthService:
         role = str(role_value or "").strip().lower()
         if role == "vendor":
             role = "partner"
-        return role
+        return role  # manager는 그대로 통과 (변경 없음, 이미 정상 작동)
 
     @classmethod
     def _normalize_user_record(cls, info: dict[str, Any]) -> dict[str, Any]:

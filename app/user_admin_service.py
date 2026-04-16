@@ -10,7 +10,7 @@ from .config import SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
 
 
 class UserAdminService:
-    VALID_ROLES = {"admin", "partner"}
+    VALID_ROLES = {"admin", "partner", "manager"}
 
     def __init__(self) -> None:
         if not SUPABASE_URL:
@@ -44,7 +44,7 @@ class UserAdminService:
         partner_text = str(partner or "").strip()
         if role == "partner" and not partner_text:
             raise ValueError("partner 권한 사용자는 협력사명을 입력해야 합니다.")
-        if role == "admin" and not partner_text:
+        if role in {"admin", "manager"} and not partner_text:
             return None
         return partner_text or None
 
