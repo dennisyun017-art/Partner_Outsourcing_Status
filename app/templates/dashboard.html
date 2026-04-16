@@ -28,6 +28,7 @@
                 <button class="btn btn-secondary" id="reloadBtn" type="button">데이터 재로딩</button>
                 {% endif %}
                 {% if current_user.role == 'admin' %}
+                <a class="btn btn-secondary" href="/admin/upload">데이터 업로드</a>
                 <a class="btn btn-secondary" href="/admin/users">사용자 관리</a>
                 <a class="btn btn-secondary" href="/admin/logs">활동 로그</a>
                 {% endif %}
