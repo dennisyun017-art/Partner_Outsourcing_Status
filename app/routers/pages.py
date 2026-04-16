@@ -165,3 +165,13 @@ def account_password_page(request: Request):
 def admin_logs_page(request: Request):
     auth.require_admin(request)
     return templates.TemplateResponse(request=request, name="admin_logs.html", context=common_context(request))
+
+@router.get("/admin/upload", response_class=HTMLResponse)
+def admin_upload_page(request: Request):
+    auth.require_admin(request)
+    return templates.TemplateResponse(request=request, name="admin_upload.html", context=common_context(request))
+
+@router.get("/admin/upload", response_class=HTMLResponse)
+def admin_upload_page(request: Request):
+    auth.require_admin(request)
+    return templates.TemplateResponse(request=request, name="admin_upload.html", context=common_context(request))

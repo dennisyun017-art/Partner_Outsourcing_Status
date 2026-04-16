@@ -15,6 +15,8 @@ from .config import (
     APP_TITLE,
     APP_VERSION,
     TEMPLATES_DIR,
+    SUPABASE_URL,  
+    SUPABASE_ANON_KEY,
 )
 from .data_service import DashboardDataService
 from .user_admin_service import UserAdminService
@@ -52,6 +54,8 @@ def common_context(request: Request) -> dict:
         "app_author": APP_AUTHOR,
         "meta": bundle.to_meta(),
         "current_user": auth.get_current_user(request),
+        "supabase_url": SUPABASE_URL,       # ← 추가
+        "supabase_anon_key": SUPABASE_ANON_KEY,  # ← 추가
     }
 
 

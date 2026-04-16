@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_title }} - 데이터 업로드</title>
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <style>
+        .page-wrap {
+            padding: 18px;
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .upload-card {
+            background: #fff;
+            border: 1px solid #dfe6ef;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .upload-card.full {
+            grid-column: 1 / -1;
+        }
+
+        .card-title {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* 경고 박스 */
+        .warn-box {
+            background: #fff7ed;
+            border: 1px solid #fb923c;
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: #c2410c;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .warn-box strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* 파일 드롭존 */
+        .drop-zone {
+            border: 2px dashed #c4b5fd;
+            border-radius: 12px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #faf5ff;
+            position: relative;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: #7c3aed;
+            background: #f3e8ff;
+        }
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .drop-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .drop-label {
+            font-size: 15px;
+            color: #7c3aed;
+            font-weight: 600;
+        }
+
+        .drop-sub {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 6px;
+        }
+
+        /* 파일 선택 후 정보 */
+        .file-info-box {
+            display: none;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-top: 14px;
+            font-size: 14px;
+            color: #166534;
+        }
+
+        .file-info-box.show {
+            display: block;
+        }
+
+        /* 진행 바 */
+        .progress-wrap {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .progress-wrap.show {
+            display: block;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar {
+            background: #e5e7eb;
+            border-radius: 99px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #7c3aed;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 99px;
+        }
+
+        /* 로그 콘솔 */
+        .log-console {
+            background: #1e1e2e;
+            color: #a6e3a1;
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 16px;
+            border-radius: 10px;
+            min-height: 180px;
+            max-height: 380px;
+            overflow-y: auto;
+            font-size: 13px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        /* 미리보기 테이블 */
+        .preview-wrap {
+            overflow: auto;
+            max-height: 320px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-top: 4px;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 900px;
+        }
+
+        .preview-table th {
+            background: #ede9fe;
+            color: #4c1d95;
+            padding: 8px 10px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .preview-table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: nowrap;
+            color: #334155;
+        }
+
+        .preview-table tr:hover td {
+            background: #faf5ff;
+        }
+
+        .preview-empty {
+            color: #94a3b8;
+            font-size: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* 통계 카드 */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #7c3aed;
+        }
+
+        .stat-value.warn {
+            color: #ea580c;
+        }
+
+        /* 버튼 그룹 */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .btn-upload {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 11px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-upload:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .btn-upload:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 11px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-reset:hover {
+            background: #e2e8f0;
+        }
+
+        /* 상태 뱃지 */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-badge.ready {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .status-badge.parsed {
+            background: #ecfdf5;
+            color: #166534;
+        }
+
+        .status-badge.uploading {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .status-badge.done {
+            background: #ecfdf5;
+            color: #166534;
+        }
+
+        .status-badge.error {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        @media (max-width: 1100px) {
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-card.full {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell page-wrap">
+        <div class="topbar">
+            <div class="title-wrap">
+                <h2>{{ app_title }} - 데이터 업로드</h2>
+                <div class="meta">
+                    관리자: <strong>{{ current_user.name }} ({{ current_user.id }})</strong>
+                    &nbsp;|&nbsp; 버전: <strong>{{ app_version }}</strong>
+                    &nbsp;|&nbsp; 수정일: <strong>{{ app_last_modified }}</strong>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <span id="statusBadge" class="status-badge ready">⏳ 대기 중</span>
+                <a class="btn btn-stage" href="/dashboard">대시보드로</a>
+                <a class="btn btn-secondary" href="/admin/users">사용자 관리</a>
+                <a class="btn btn-secondary" href="/admin/logs">활동 로그</a>
+                <form method="post" action="/logout" style="margin:0;">
+                    <button class="btn btn-primary" type="submit">로그아웃</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="upload-grid">
+
+            <!-- 왼쪽: 파일 선택 + 업로드 -->
+            <div class="upload-card">
+                <h3 class="card-title">📤 엑셀 파일 선택</h3>
+
+                <div class="warn-box">
+                    <span>⚠️</span>
+                    <div>
+                        <strong>주의: 전체 교체 방식</strong>
+                        업로드 시 기존 mps_records 데이터가 <strong>전체 삭제</strong>된 후 새 데이터로 교체됩니다.
+                        업로드 전 미리보기를 반드시 확인하세요.
+                    </div>
+                </div>
+
+                <div class="drop-zone" id="dropZone">
+                    <input type="file" id="fileInput" accept=".xlsx,.xlsm" />
+                    <div class="drop-icon">📂</div>
+                    <div class="drop-label">파일을 드래그하거나 클릭해서 선택</div>
+                    <div class="drop-sub">.xlsx 또는 .xlsm 파일만 가능</div>
+                </div>
+
+                <div class="file-info-box" id="fileInfoBox"></div>
+
+                <div class="stat-row" id="statRow" style="display:none; margin-top:16px;">
+                    <div class="stat-item">
+                        <div class="stat-label">전체 행</div>
+                        <div class="stat-value" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">업로드 행</div>
+                        <div class="stat-value" id="statUpload">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">제외 행 (wo 없음)</div>
+                        <div class="stat-value warn" id="statSkip">0</div>
+                    </div>
+                </div>
+
+                <div class="progress-wrap" id="progressWrap">
+                    <div class="progress-label" id="progressLabel">0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn-upload" id="uploadBtn" disabled onclick="startUpload()">
+                        🗑️ 기존 데이터 삭제 후 업로드
+                    </button>
+                    <button class="btn-reset" id="resetBtn" onclick="resetAll()">초기화</button>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 로그 콘솔 -->
+            <div class="upload-card">
+                <h3 class="card-title">📋 처리 로그</h3>
+                <div class="log-console" id="logConsole">대기 중...</div>
+            </div>
+
+            <!-- 하단 전체: 미리보기 테이블 -->
+            <div class="upload-card full">
+                <h3 class="card-title">👁️ 데이터 미리보기 <span style="font-size:13px; color:#94a3b8; font-weight:400;">(상위 20행)</span></h3>
+                <div class="preview-wrap">
+                    <div class="preview-empty" id="previewEmpty">파일을 선택하면 미리보기가 표시됩니다.</div>
+                    <table class="preview-table" id="previewTable" style="display:none;">
+                        <thead id="previewHead"></thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // ── Supabase 설정 (환경변수 대신 bootstrap에서 주입 가능하나, 여기선 직접 호출)
+        const SUPABASE_URL = '{{ supabase_url }}';
+        const SUPABASE_KEY = '{{ supabase_anon_key }}';
+        const TABLE = 'mps_records';
+        const BATCH_SIZE = 50;
+        const PREVIEW_ROWS = 20;
+
+        let parsedData = [];
+        let isUploading = false;
+
+        // ── 로그 출력
+        function log(msg, color) {
+            const el = document.getElementById('logConsole');
+            if (el.textContent === '대기 중...') el.innerHTML = '';
+            const span = document.createElement('span');
+            if (color) span.style.color = color;
+            span.textContent = msg + '\n';
+            el.appendChild(span);
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logConsole').innerHTML = '';
+        }
+
+        // ── 상태 뱃지
+        function setStatus(type, text) {
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'status-badge ' + type;
+            badge.textContent = text;
+        }
+
+        // ── 진행 바
+        function setProgress(pct) {
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressLabel').textContent = pct + '%';
+        }
+
+        // ── 드롭존 이벤트
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        // ── 파일 파싱
+        function processFile(file) {
+            clearLog();
+            parsedData = [];
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('statRow').style.display = 'none';
+            document.getElementById('progressWrap').classList.remove('show');
+            document.getElementById('previewTable').style.display = 'none';
+            document.getElementById('previewEmpty').textContent = '파일 읽는 중...';
+
+            setStatus('uploading', '⏳ 파일 읽는 중...');
+            log(`📂 파일 읽는 중: ${file.name}`);
+
+            const infoBox = document.getElementById('fileInfoBox');
+            infoBox.textContent = `선택된 파일: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            infoBox.classList.add('show');
+
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                try {
+                    const wb = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
+                    const ws = wb.Sheets['MPS'] || wb.Sheets[wb.SheetNames[0]];
+                    const raw = XLSX.utils.sheet_to_json(ws, { defval: null });
+
+                    const allRows = raw.map(row => {
+                        const obj = {};
+                        for (const key in row) {
+                            const val = row[key];
+                            if (val instanceof Date) {
+                                obj[key] = val.toISOString().split('T')[0];
+                            } else if (val === '' || val === undefined) {
+                                obj[key] = null;
+                            } else {
+                                obj[key] = val;
+                            }
+                        }
+                        return obj;
+                    });
+
+                    // lot 빈값 ffill
+                    let lastLot = null;
+                    let lotFillCount = 0;
+                    for (const row of allRows) {
+                        if (row.lot !== null && row.lot !== undefined && row.lot !== '') {
+                            lastLot = row.lot;
+                        } else if (lastLot !== null) {
+                            row.lot = lastLot;
+                            lotFillCount++;
+                        }
+                    }
+
+                    const skipped = allRows.filter(r => !r.wo);
+                    parsedData = allRows.filter(r => r.wo);
+
+                    // 통계 표시
+                    document.getElementById('statTotal').textContent = allRows.length;
+                    document.getElementById('statUpload').textContent = parsedData.length;
+                    document.getElementById('statSkip').textContent = skipped.length;
+                    document.getElementById('statRow').style.display = 'grid';
+
+                    log(`✅ 파싱 완료: 전체 ${allRows.length}행 → 업로드 ${parsedData.length}행`, '#a6e3a1');
+                    if (lotFillCount > 0) log(`🔄 lot 빈값 ${lotFillCount}개 자동 채움`, '#89dceb');
+                    if (skipped.length > 0) log(`⚠️  wo 없는 행 ${skipped.length}개 제외`, '#fab387');
+                    if (parsedData.length > 0) {
+                        log(`📋 컬럼: ${Object.keys(parsedData[0]).join(', ')}`, '#89dceb');
+                    }
+
+                    // 미리보기
+                    renderPreview(parsedData);
+
+                    setStatus('parsed', '✅ 파일 파싱 완료');
+                    document.getElementById('uploadBtn').disabled = false;
+
+                } catch (err) {
+                    log(`❌ 파일 읽기 오류: ${err.message}`, '#f38ba8');
+                    setStatus('error', '❌ 파일 오류');
+                }
+            };
+            reader.readAsBinaryString(file);
+        }
+
+        // ── 미리보기 렌더링
+        function renderPreview(data) {
+            if (!data.length) {
+                document.getElementById('previewEmpty').textContent = '업로드할 데이터가 없습니다.';
+                return;
+            }
+
+            const cols = Object.keys(data[0]);
+            const previewRows = data.slice(0, PREVIEW_ROWS);
+
+            const thead = document.getElementById('previewHead');
+            thead.innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+
+            const tbody = document.getElementById('previewBody');
+            tbody.innerHTML = previewRows.map(row =>
+                '<tr>' + cols.map(c => {
+                    const val = row[c];
+                    return `<td>${val !== null && val !== undefined ? val : '<span style="color:#cbd5e1">-</span>'}</td>`;
+                }).join('') + '</tr>'
+            ).join('');
+
+            document.getElementById('previewEmpty').style.display = 'none';
+            document.getElementById('previewTable').style.display = 'table';
+        }
+
+        // ── 업로드 실행
+        async function startUpload() {
+            if (!parsedData.length || isUploading) return;
+
+            if (!confirm(`⚠️ 기존 mps_records 데이터 전체를 삭제하고 새 데이터 ${parsedData.length}행을 업로드합니다.\n\n계속하시겠습니까?`)) return;
+
+            isUploading = true;
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('resetBtn').disabled = true;
+            document.getElementById('progressWrap').classList.add('show');
+            setProgress(0);
+            setStatus('uploading', '⏳ 업로드 중...');
+
+            log('\n🗑️  기존 데이터 삭제 중...', '#fab387');
+
+            // Step 1: 전체 삭제
+            try {
+                const delRes = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=gte.0`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    }
+                });
+
+                if (!delRes.ok && delRes.status !== 404) {
+                    const delRes2 = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?lot=gte.0`, {
+                        method: 'DELETE',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        }
+                    });
+                    if (!delRes2.ok) {
+                        const errText = await delRes2.text();
+                        throw new Error(`삭제 실패: ${errText}`);
+                    }
+                }
+                log('✅ 기존 데이터 삭제 완료', '#a6e3a1');
+            } catch (err) {
+                log(`❌ 삭제 오류: ${err.message}`, '#f38ba8');
+                setStatus('error', '❌ 삭제 실패');
+                isUploading = false;
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('resetBtn').disabled = false;
+                return;
+            }
+
+            // Step 2: 배치 INSERT
+            const total = parsedData.length;
+            let inserted = 0;
+            log(`\n📤 업로드 시작 (총 ${total}행, ${BATCH_SIZE}행씩)`, '#89dceb');
+
+            for (let i = 0; i < total; i += BATCH_SIZE) {
+                const batch = parsedData.slice(i, i + BATCH_SIZE);
+                try {
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify(batch)
+                    });
+
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        throw new Error(errText);
+                    }
+
+                    inserted += batch.length;
+                    const pct = Math.round((inserted / total) * 100);
+                    setProgress(pct);
+                    log(`  ✔ ${inserted}/${total}행 (${pct}%)`, '#a6e3a1');
+
+                } catch (err) {
+                    log(`❌ 배치 오류 (${i}~${i + BATCH_SIZE}): ${err.message}`, '#f38ba8');
+                    setStatus('error', '❌ 업로드 실패');
+                    isUploading = false;
+                    document.getElementById('uploadBtn').disabled = false;
+                    document.getElementById('resetBtn').disabled = false;
+                    return;
+                }
+            }
+
+            setProgress(100);
+            log(`\n🎉 완료! ${inserted}행이 mps_records에 저장되었습니다.`, '#a6e3a1');
+            setStatus('done', `✅ ${inserted}행 업로드 완료`);
+            isUploading = false;
+            document.getElementById('resetBtn').disabled = false;
+        }
+
+        // ── 초기화
+        function resetAll() {
+            if (isUploading) return;
+            parsedData = [];
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfoBox').classList.remove('show');
+            document.getElementById('statRow').style.display = 'none';
+            document.getElementById('progressWrap').classList.remove('show');
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('previewTable').style.display = 'none';
+            document.getElementById('previewEmpty').style.display = 'block';
+            document.getElementById('previewEmpty').textContent = '파일을 선택하면 미리보기가 표시됩니다.';
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('logConsole').innerHTML = '대기 중...';
+            setStatus('ready', '⏳ 대기 중');
+        }
+    </script>
+</body>
+
+</html>
