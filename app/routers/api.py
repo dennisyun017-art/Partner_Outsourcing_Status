@@ -118,7 +118,7 @@ def stage_data(request: Request):
 @router.post("/reload-data")
 def reload_data(request: Request, base_date: str = Form(default="")):
     try:
-        admin_user = auth.require_admin(request)
+        admin_user = auth.require_manager(request)
         bundle = reload_core_services(base_date_text=base_date or None)
 
         try:

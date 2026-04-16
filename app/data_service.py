@@ -343,7 +343,7 @@ class DashboardDataService:
             records.append(rec)
 
         role = str(user.get("role", "")).lower()
-        if role == "admin":
+        if role in {"admin", "manager"}:
             return records
 
         partner = user.get("partner")
