@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import bcrypt
 import json
 import logging
 from pathlib import Path
@@ -33,6 +33,16 @@ class AuthService:
         if path.exists() and path.is_file():
             return path
         return None
+
+    @staticmethod
+    def _verify_password(plain_password: str, hashed_password: str) -> bool:
+        try:
+            return bcrypt.checkpw(
+                plain_password.encode("utf-8"),
+                hashed_password.encode("utf-8")
+            )
+        except Exception:
+            return False
 
     @staticmethod
     def _normalize_role(role_value: Any) -> str:
@@ -188,7 +198,7 @@ class AuthService:
                 logger.info("LOGIN_BLOCKED_INACTIVE | user_id=%s", normalized_user_id)
                 return None
 
-            if str(user.get("password", "")) != plain_password:
+            if not self._verify_password(plain_password, str(user.get("password", ""))):
                 logger.info("LOGIN_BLOCKED_PASSWORD | user_id=%s", normalized_user_id)
                 return None
 
@@ -211,7 +221,7 @@ class AuthService:
             logger.info("LOGIN_BLOCKED_INACTIVE | source=json | user_id=%s", normalized_user_id)
             return None
 
-        if str(user.get("password", "")) != plain_password:
+        if not self._verify_password(plain_password, str(user.get("password", ""))):
             logger.info("LOGIN_BLOCKED_PASSWORD | source=json | user_id=%s", normalized_user_id)
             return None
 

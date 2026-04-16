@@ -1,4 +1,5 @@
 from __future__ import annotations
+import bcrypt
 
 from datetime import datetime, timezone
 from typing import Any
@@ -189,7 +190,7 @@ class UserAdminService:
 
         payload = {
             "user_id": normalized_user_id,
-            "password": normalized_password,
+            "password": bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
             "role": normalized_role,
             "partner": normalized_partner,
             "name": normalized_name,
@@ -239,7 +240,10 @@ class UserAdminService:
         }
 
         if normalized_password:
-            payload["password"] = normalized_password
+            payload["password"] = bcrypt.hashpw(
+                normalized_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
 
         response = (
             self.client
@@ -298,7 +302,13 @@ class UserAdminService:
         if not bool(user.get("is_active", False)):
             return False
 
-        return str(user.get("password", "")) == normalized_password
+        try:
+            return bcrypt.checkpw(
+                normalized_password.encode("utf-8"),
+                str(user.get("password", "")).encode("utf-8")
+            )
+        except Exception:
+            return False
 
     def change_password(self, user_id: str, new_password: str) -> dict[str, Any]:
         normalized_user_id = self._normalize_user_id(user_id)
@@ -317,7 +327,7 @@ class UserAdminService:
             self.client
             .table("users")
             .update({
-                "password": normalized_password,
+                "password": bcrypt.hashpw(normalized_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
                 "updated_at": self._utc_now_iso(),
             })
             .eq("user_id", normalized_user_id)
