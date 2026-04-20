@@ -36,7 +36,6 @@
   let visibleColumns = new Set(ALL_COLUMNS);
   let columnFilters = {};
   ALL_COLUMNS.forEach(c => { columnFilters[c] = ""; });
-
   let sortState = { column: null, direction: null };
   let columnWidths = {};
   let stickyLeftMap = {};
@@ -123,6 +122,7 @@
     return vs.length > 0 && vs[vs.length - 1] === col;
   }
 
+  // ★ sticky 스타일 - position은 CSS에서만 처리, JS는 left 값만 설정
   function applyStickyStyles(cell, col, rowType) {
     if (!isStickyCol(col)) return;
     cell.classList.add("sticky-col");
@@ -165,7 +165,6 @@
     if (sortState.column !== col || !sortState.direction) return "";
     return sortState.direction === "asc" ? " ▲" : " ▼";
   }
-
   function cycleSort(col) {
     if (sortState.column !== col) sortState = { column: col, direction: "asc" };
     else if (sortState.direction === "asc") sortState = { column: col, direction: "desc" };
@@ -174,6 +173,7 @@
     applyFilters({ resetScrollTop: true });
   }
 
+  // ★ 핵심 수정: 헤더 셀 cssText에서 position:relative 완전 제거
   function buildHeaderRow() {
     const row = document.createElement("div");
     row.className = "table-row header-row";
@@ -182,25 +182,37 @@
       cell.className = "table-cell header-cell";
       cell.dataset.col = col;
       const w = getColumnWidth(col);
-      // ★ 셀 너비를 정확히 고정 - flex로 늘어나지 않게
-      cell.style.cssText = `width:${w}px;min-width:${w}px;max-width:${w}px;position:relative;overflow:hidden;box-sizing:border-box;flex-shrink:0;flex-grow:0;`;
+      // ★ position 속성 없음 - CSS의 sticky-col 클래스가 position:sticky 처리
+      cell.style.width = w + "px";
+      cell.style.minWidth = w + "px";
+      cell.style.maxWidth = w + "px";
+      cell.style.flexShrink = "0";
+      cell.style.flexGrow = "0";
+      cell.style.boxSizing = "border-box";
+      cell.style.overflow = "hidden";
       applyStickyStyles(cell, col, "header");
 
       // 텍스트 라벨
       const label = document.createElement("span");
       label.textContent = col + getSortIndicator(col);
-      label.style.cssText = "display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;width:100%;padding-right:8px;box-sizing:border-box;";
+      label.style.cssText = "display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;flex:1;min-width:0;padding-right:10px;box-sizing:border-box;";
       label.onclick = () => cycleSort(col);
       cell.appendChild(label);
 
-      // ★ 리사이즈 핸들: width:0 으로 레이아웃 공간 차지 안 함
+      // ★ 리사이즈 핸들: position:absolute 인라인으로 설정 (flex 공간 차지 안 함)
       const handle = document.createElement("div");
-      handle.style.cssText = "position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;z-index:50;background:transparent;";
-      handle.addEventListener("mouseenter", function() { handle.style.background = "rgba(124,58,237,0.35)"; });
-      handle.addEventListener("mouseleave", function() { if (!resizeState) handle.style.background = "transparent"; });
+      handle.style.position = "absolute";
+      handle.style.right = "0";
+      handle.style.top = "0";
+      handle.style.width = "5px";
+      handle.style.height = "100%";
+      handle.style.cursor = "col-resize";
+      handle.style.zIndex = "50";
+      handle.style.background = "transparent";
+      handle.addEventListener("mouseenter", () => { handle.style.background = "rgba(124,58,237,0.35)"; });
+      handle.addEventListener("mouseleave", () => { if (!resizeState) handle.style.background = "transparent"; });
       handle.addEventListener("mousedown", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         resizeState = { col, startX: e.clientX, startW: getColumnWidth(col), handle };
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
@@ -211,7 +223,15 @@
     return row;
   }
 
-  // ★ 전역 리사이즈 이벤트
+  // ★ 리사이즈 핸들이 position:absolute 이므로 부모 셀에 position:relative 필요
+  // → applyStickyStyles 이후 sticky-col이면 이미 position:sticky, 아니면 relative 추가
+  function ensureRelativeForHandle(cell, col) {
+    if (!isStickyCol(col)) {
+      cell.style.position = "relative";
+    }
+    // sticky-col은 CSS에서 position:sticky !important 로 처리됨
+  }
+
   document.addEventListener("mousemove", function(e) {
     if (!resizeState) return;
     const diff = e.clientX - resizeState.startX;
@@ -219,7 +239,6 @@
     const minW = cfg ? cfg.minWidth : 60;
     const newW = Math.max(minW, resizeState.startW + diff);
     columnWidths[resizeState.col] = newW;
-    // 해당 컬럼 모든 셀 즉시 업데이트
     document.querySelectorAll(`[data-col="${resizeState.col}"]`).forEach(c => {
       c.style.width = newW + "px";
       c.style.minWidth = newW + "px";
@@ -248,19 +267,22 @@
       cell.className = "table-cell filter-cell";
       cell.dataset.col = col;
       const w = getColumnWidth(col);
-      cell.style.cssText = `width:${w}px;min-width:${w}px;max-width:${w}px;flex-shrink:0;flex-grow:0;box-sizing:border-box;`;
+      cell.style.width = w + "px";
+      cell.style.minWidth = w + "px";
+      cell.style.maxWidth = w + "px";
+      cell.style.flexShrink = "0";
+      cell.style.flexGrow = "0";
+      cell.style.boxSizing = "border-box";
       applyStickyStyles(cell, col, "filter");
 
       const inp = document.createElement("input");
       inp.className = "filter-input";
-      inp.type = "text";
-      inp.placeholder = "필터";
+      inp.type = "text"; inp.placeholder = "필터";
       inp.value = columnFilters[col] || "";
       inp.dataset.column = col;
       inp.addEventListener("compositionstart", () => { isComposing = true; });
       inp.addEventListener("compositionend", e => {
-        isComposing = false;
-        columnFilters[col] = e.target.value || "";
+        isComposing = false; columnFilters[col] = e.target.value || "";
         debouncedApplyColumnFilters();
       });
       inp.addEventListener("input", e => {
@@ -278,6 +300,11 @@
     const header = document.getElementById("tableHeader");
     const cur = header.querySelector(".header-row");
     const newRow = buildHeaderRow();
+    // ★ sticky 아닌 헤더 셀에 position:relative 추가 (리사이즈 핸들 absolute 기준점)
+    getVisibleColumns().forEach((col, i) => {
+      const cell = newRow.querySelectorAll('.table-cell')[i];
+      if (cell && !isStickyCol(col)) cell.style.position = "relative";
+    });
     if (cur) header.replaceChild(newRow, cur); else header.prepend(newRow);
   }
 
@@ -304,7 +331,13 @@
   function renderTableStructure() {
     const header = document.getElementById("tableHeader");
     header.innerHTML = "";
-    header.appendChild(buildHeaderRow());
+    const hRow = buildHeaderRow();
+    // sticky 아닌 헤더 셀에만 position:relative (리사이즈 핸들 기준점)
+    getVisibleColumns().forEach((col, i) => {
+      const cell = hRow.querySelectorAll('.table-cell')[i];
+      if (cell && !isStickyCol(col)) cell.style.position = "relative";
+    });
+    header.appendChild(hRow);
     header.appendChild(buildFilterRow());
     syncTableInnerWidth();
   }
@@ -346,7 +379,12 @@
       cell.className = "table-cell data-cell";
       cell.dataset.col = col;
       const w = getColumnWidth(col);
-      cell.style.cssText = `width:${w}px;min-width:${w}px;max-width:${w}px;flex-shrink:0;flex-grow:0;box-sizing:border-box;`;
+      cell.style.width = w + "px";
+      cell.style.minWidth = w + "px";
+      cell.style.maxWidth = w + "px";
+      cell.style.flexShrink = "0";
+      cell.style.flexGrow = "0";
+      cell.style.boxSizing = "border-box";
       applyStickyStyles(cell, col, "data");
       if (col === "상태") {
         const span = document.createElement("span");
@@ -384,13 +422,13 @@
       const av = a[col]||"", bv = b[col]||"";
       const ad = Date.parse(av), bd = Date.parse(bv);
       let r = 0;
-      if (!isNaN(ad)&&!isNaN(bd)&&String(av).length>=8&&String(bv).length>=8) r = ad-bd;
+      if (!isNaN(ad)&&!isNaN(bd)&&String(av).length>=8&&String(bv).length>=8) r=ad-bd;
       else {
-        const an = Number(av), bn = Number(bv);
-        if (!isNaN(an)&&!isNaN(bn)&&String(av).trim()&&String(bv).trim()) r = an-bn;
-        else r = String(av).localeCompare(String(bv),"ko");
+        const an=Number(av), bn=Number(bv);
+        if (!isNaN(an)&&!isNaN(bn)&&String(av).trim()&&String(bv).trim()) r=an-bn;
+        else r=String(av).localeCompare(String(bv),"ko");
       }
-      return dir==="asc" ? r : -r;
+      return dir==="asc"?r:-r;
     });
   }
 
@@ -408,29 +446,29 @@
 
     const data = rawData.filter(row => {
       if (searchText) {
-        const full = normalizeText(ALL_COLUMNS.map(c => row[c]||"").join(" "));
+        const full = normalizeText(ALL_COLUMNS.map(c=>row[c]||"").join(" "));
         if (!full.includes(searchText)) return false;
       }
-      if (filterLot  && !normalizeText(row["Lot"]||"").includes(filterLot))  return false;
-      if (filterCode && !normalizeText(row["CODE"]||"").includes(filterCode)) return false;
-      if (filterWo   && !normalizeText(row["WO"]||"").includes(filterWo))    return false;
+      if (filterLot   && !normalizeText(row["Lot"]||"").includes(filterLot))   return false;
+      if (filterCode  && !normalizeText(row["CODE"]||"").includes(filterCode))  return false;
+      if (filterWo    && !normalizeText(row["WO"]||"").includes(filterWo))      return false;
       if (filterAssembly) {
         const val = normalizeText([row["EFEM"],row["TM"],row["PM"],row["SU"]].map(v=>v||"").join(" "));
         if (!val.includes(filterAssembly)) return false;
       }
       if (filterTuning && !normalizeText(row["Tuning"]||"").includes(filterTuning)) return false;
       if (filterDate) {
-        const s = row["생산시작일"]||"", e = row["생산완료일"]||"";
+        const s=row["생산시작일"]||"", e=row["생산완료일"]||"";
         if (!(s<=filterDate&&filterDate<=e)&&s!==filterDate&&e!==filterDate) return false;
       }
       if (filterDateFrom||filterDateTo) {
-        const s = row["생산시작일"]||"", e = row["생산완료일"]||"";
-        if (filterDateFrom&&filterDateTo) { if (e<filterDateFrom||s>filterDateTo) return false; }
-        else if (filterDateFrom) { if (e&&e<filterDateFrom) return false; }
-        else if (filterDateTo)   { if (s&&s>filterDateTo)   return false; }
+        const s=row["생산시작일"]||"", e=row["생산완료일"]||"";
+        if (filterDateFrom&&filterDateTo){if(e<filterDateFrom||s>filterDateTo)return false;}
+        else if (filterDateFrom){if(e&&e<filterDateFrom)return false;}
+        else if (filterDateTo){if(s&&s>filterDateTo)return false;}
       }
       for (const col of ALL_COLUMNS) {
-        const f = normalizeText(columnFilters[col]||"");
+        const f=normalizeText(columnFilters[col]||"");
         if (!f) continue;
         if (!normalizeText(row[col]||"").includes(f)) return false;
       }
@@ -456,87 +494,87 @@
   }
 
   function toDateObj(s) {
-    if (!s) return null; const d = new Date(s);
+    if (!s) return null; const d=new Date(s);
     if (isNaN(d.getTime())) return null; d.setHours(0,0,0,0); return d;
   }
   function formatDate(d) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   }
-  function addDays(d,n) { const x=new Date(d); x.setDate(x.getDate()+n); x.setHours(0,0,0,0); return x; }
-  function diffDays(a,b) { return Math.round((b-a)/(24*60*60*1000)); }
-  function isBetween(t,s,e) { return !!(t&&s&&e&&s<=t&&t<=e); }
+  function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);x.setHours(0,0,0,0);return x;}
+  function diffDays(a,b){return Math.round((b-a)/(24*60*60*1000));}
+  function isBetween(t,s,e){return !!(t&&s&&e&&s<=t&&t<=e);}
 
   function renderTimeline() {
-    const wrap = document.getElementById("timelineWrap"); wrap.innerHTML = "";
-    const rows = filteredData.map(r=>({
-      label:`${r["Lot"]||""} / ${r["WO"]||""}`, status:r["상태"]||"",
-      gS:toDateObj(r["phase_green_start"]), gE:toDateObj(r["phase_green_end"]),
-      bS:toDateObj(r["phase_blue_start"]),  bE:toDateObj(r["phase_blue_end"])
+    const wrap=document.getElementById("timelineWrap"); wrap.innerHTML="";
+    const rows=filteredData.map(r=>({
+      label:`${r["Lot"]||""} / ${r["WO"]||""}`,status:r["상태"]||"",
+      gS:toDateObj(r["phase_green_start"]),gE:toDateObj(r["phase_green_end"]),
+      bS:toDateObj(r["phase_blue_start"]),bE:toDateObj(r["phase_blue_end"])
     })).filter(r=>r.gS||r.bS||r.bE).slice(0,100);
-    if (!rows.length) { wrap.innerHTML="<div style='padding:12px;'>표시할 일정 데이터가 없습니다.</div>"; return; }
-    let minDate=null, maxDate=null;
+    if(!rows.length){wrap.innerHTML="<div style='padding:12px;'>표시할 일정 데이터가 없습니다.</div>";return;}
+    let minDate=null,maxDate=null;
     rows.forEach(r=>{
       [r.gS,r.bS].filter(Boolean).forEach(d=>{if(!minDate||d<minDate)minDate=d;});
       [r.gE,r.bE].filter(Boolean).forEach(d=>{if(!maxDate||d>maxDate)maxDate=d;});
     });
-    if (!minDate||!maxDate) { wrap.innerHTML="<div style='padding:12px;'>표시할 일정 데이터가 없습니다.</div>"; return; }
-    const total=diffDays(minDate,maxDate), capped=Math.min(total,45);
-    const tbl=document.createElement("table"); tbl.className="timeline-table";
-    const thead=document.createElement("thead"), hr=document.createElement("tr");
-    const fth=document.createElement("th"); fth.className="label-col"; fth.textContent="Lot / WO"; hr.appendChild(fth);
+    if(!minDate||!maxDate){wrap.innerHTML="<div style='padding:12px;'>표시할 일정 데이터가 없습니다.</div>";return;}
+    const total=diffDays(minDate,maxDate),capped=Math.min(total,45);
+    const tbl=document.createElement("table");tbl.className="timeline-table";
+    const thead=document.createElement("thead"),hr=document.createElement("tr");
+    const fth=document.createElement("th");fth.className="label-col";fth.textContent="Lot / WO";hr.appendChild(fth);
     const today=toDateObj(TODAY_STR);
     for(let i=0;i<=capped;i++){
-      const cur=addDays(minDate,i); const th=document.createElement("th");
+      const cur=addDays(minDate,i);const th=document.createElement("th");
       th.textContent=formatDate(cur).slice(5);
       if(today&&cur.getTime()===today.getTime())th.classList.add("today-col");
       hr.appendChild(th);
     }
-    thead.appendChild(hr); tbl.appendChild(thead);
+    thead.appendChild(hr);tbl.appendChild(thead);
     const tbody=document.createElement("tbody");
     rows.forEach(r=>{
       const tr=document.createElement("tr");
-      const tdL=document.createElement("td"); tdL.className="label-col";
-      tdL.textContent=`${r.label} (${r.status})`; tr.appendChild(tdL);
+      const tdL=document.createElement("td");tdL.className="label-col";
+      tdL.textContent=`${r.label} (${r.status})`;tr.appendChild(tdL);
       for(let i=0;i<=capped;i++){
-        const cur=addDays(minDate,i); const td=document.createElement("td");
+        const cur=addDays(minDate,i);const td=document.createElement("td");
         if(today&&cur.getTime()===today.getTime())td.classList.add("today-col");
-        const inner=document.createElement("div"); inner.className="timeline-cell-inner";
+        const inner=document.createElement("div");inner.className="timeline-cell-inner";
         if(isBetween(cur,r.bS,r.bE)){const p=document.createElement("div");p.className="timeline-pill pill-blue";inner.appendChild(p);}
         else if(isBetween(cur,r.gS,r.gE)){const p=document.createElement("div");p.className="timeline-pill pill-green";inner.appendChild(p);}
-        td.appendChild(inner); tr.appendChild(td);
+        td.appendChild(inner);tr.appendChild(td);
       }
       tbody.appendChild(tr);
     });
-    tbl.appendChild(tbody); wrap.appendChild(tbl);
+    tbl.appendChild(tbody);wrap.appendChild(tbl);
     if(total>capped){
-      const note=document.createElement("div"); note.className="timeline-note";
+      const note=document.createElement("div");note.className="timeline-note";
       note.textContent=`일정 범위가 길어 최초 46일 구간만 표시했습니다. 전체 범위: ${formatDate(minDate)} ~ ${formatDate(maxDate)}`;
       wrap.appendChild(note);
     }
   }
 
-  const debouncedApplyFilters = debounce(()=>applyFilters({resetScrollTop:true}), 200);
-  const debouncedApplyColumnFilters = debounce(()=>applyFilters({resetScrollTop:false}), 300);
+  const debouncedApplyFilters=debounce(()=>applyFilters({resetScrollTop:true}),200);
+  const debouncedApplyColumnFilters=debounce(()=>applyFilters({resetScrollTop:false}),300);
 
-  document.getElementById("searchText").addEventListener("input", debouncedApplyFilters);
-  document.getElementById("filterLot").addEventListener("input", debouncedApplyFilters);
-  document.getElementById("filterCode").addEventListener("input", debouncedApplyFilters);
-  document.getElementById("filterWo").addEventListener("input", debouncedApplyFilters);
-  document.getElementById("filterAssemblyBp").addEventListener("input", debouncedApplyFilters);
-  document.getElementById("filterTuningBp").addEventListener("input", debouncedApplyFilters);
-  document.getElementById("filterDate").addEventListener("change", ()=>applyFilters({resetScrollTop:true}));
-  document.getElementById("filterDateFrom").addEventListener("change", ()=>applyFilters({resetScrollTop:true}));
-  document.getElementById("filterDateTo").addEventListener("change", ()=>applyFilters({resetScrollTop:true}));
-  document.getElementById("tableScroll").addEventListener("scroll", ()=>renderVirtualRows(false));
-  document.getElementById("detailModal").addEventListener("click", closeDetailModal);
-  document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeDetailModal(); });
+  document.getElementById("searchText").addEventListener("input",debouncedApplyFilters);
+  document.getElementById("filterLot").addEventListener("input",debouncedApplyFilters);
+  document.getElementById("filterCode").addEventListener("input",debouncedApplyFilters);
+  document.getElementById("filterWo").addEventListener("input",debouncedApplyFilters);
+  document.getElementById("filterAssemblyBp").addEventListener("input",debouncedApplyFilters);
+  document.getElementById("filterTuningBp").addEventListener("input",debouncedApplyFilters);
+  document.getElementById("filterDate").addEventListener("change",()=>applyFilters({resetScrollTop:true}));
+  document.getElementById("filterDateFrom").addEventListener("change",()=>applyFilters({resetScrollTop:true}));
+  document.getElementById("filterDateTo").addEventListener("change",()=>applyFilters({resetScrollTop:true}));
+  document.getElementById("tableScroll").addEventListener("scroll",()=>renderVirtualRows(false));
+  document.getElementById("detailModal").addEventListener("click",closeDetailModal);
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDetailModal();});
 
-  const reloadBtn = document.getElementById("reloadBtn");
-  if (reloadBtn) {
-    reloadBtn.addEventListener("click", async function() {
-      const res = await fetch("/api/reload-data",{method:"POST",body:new FormData(),credentials:"same-origin"});
-      if (!res.ok) { alert("데이터 재로딩 실패"); return; }
-      await loadData(); alert("데이터 재로딩 완료");
+  const reloadBtn=document.getElementById("reloadBtn");
+  if(reloadBtn){
+    reloadBtn.addEventListener("click",async function(){
+      const res=await fetch("/api/reload-data",{method:"POST",body:new FormData(),credentials:"same-origin"});
+      if(!res.ok){alert("데이터 재로딩 실패");return;}
+      await loadData();alert("데이터 재로딩 완료");
     });
   }
 
