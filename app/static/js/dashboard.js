@@ -277,7 +277,7 @@
 
       const inp = document.createElement("input");
       inp.className = "filter-input";
-      inp.type = "text"; inp.placeholder = "필터";
+      inp.placeholder = "필터 (콤마로 OR)";
       inp.value = columnFilters[col] || "";
       inp.dataset.column = col;
       inp.addEventListener("compositionstart", () => { isComposing = true; });
@@ -467,10 +467,16 @@
         else if (filterDateFrom){if(e&&e<filterDateFrom)return false;}
         else if (filterDateTo){if(s&&s>filterDateTo)return false;}
       }
+      // ★ 컬럼 필터: 콤마 구분 OR 부분일치
       for (const col of ALL_COLUMNS) {
-        const f=normalizeText(columnFilters[col]||"");
-        if (!f) continue;
-        if (!normalizeText(row[col]||"").includes(f)) return false;
+        const raw = (columnFilters[col] || "").trim();
+        if (!raw) continue;
+        const terms = raw.split(",").map(t => normalizeText(t.trim())).filter(t => t.length > 0);
+        if (terms.length === 0) continue;
+        const cellVal = normalizeText(row[col] || "");
+        // OR 조건: 하나라도 포함되면 통과
+        const matched = terms.some(t => cellVal.includes(t));
+        if (!matched) return false;
       }
       return true;
     });
