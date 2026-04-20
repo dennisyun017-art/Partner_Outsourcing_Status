@@ -751,3 +751,60 @@
         padding: 2px 8px;
     }
 }
+
+/* ===== 태그 필터 스타일 (v0.2.5) ===== */
+.tag-filter-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 36px;
+  border: 1px solid #cfd8e3;
+  border-radius: 10px;
+  padding: 4px 8px;
+  background: #fff;
+  cursor: text;
+  box-sizing: border-box;
+  width: 100%;
+}
+.tag-filter-wrap:focus-within {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+.tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #7c3aed;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 8px 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.tag-remove {
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0.75;
+  margin-left: 2px;
+}
+.tag-remove:hover { opacity: 1; }
+.tag-input {
+  border: none;
+  outline: none;
+  font-size: 12px;
+  min-width: 80px;
+  flex: 1;
+  background: transparent;
+  padding: 2px 0;
+  height: 24px;
+}
