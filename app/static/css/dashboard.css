@@ -808,3 +808,30 @@
   padding: 2px 0;
   height: 24px;
 }
+
+/* ===== 컬럼 필터 태그 스타일 (v0.2.5) ===== */
+.col-tag-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  min-height: 30px;
+  width: 100%;
+  cursor: text;
+}
+.col-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-items: center;
+}
+.col-tag-input {
+  border: none;
+  outline: none;
+  font-size: 11px;
+  min-width: 50px;
+  flex: 1;
+  background: transparent;
+  padding: 2px 0;
+  height: 22px;
+}
