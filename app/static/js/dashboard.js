@@ -6,26 +6,26 @@
   const ROW_HEIGHT = 38;
   const BUFFER_ROWS = 10;
   const COLUMN_CONFIGS = [
-    { key: "상태",       fixed: true,  hideable: false, minWidth: 120, maxWidth: 120 },
-    { key: "Lot",        fixed: true,  hideable: false, minWidth: 110, maxWidth: 150 },
-    { key: "CODE",       fixed: true,  hideable: false, minWidth: 110, maxWidth: 150 },
-    { key: "WO",         fixed: true,  hideable: false, minWidth: 140, maxWidth: 200 },
-    { key: "S/N",        fixed: true,  hideable: false, minWidth: 130, maxWidth: 220 },
-    { key: "Customer",   fixed: true,  hideable: false, minWidth: 150, maxWidth: 340 },
-    { key: "Line",       fixed: true,  hideable: false, minWidth: 140, maxWidth: 240 },
-    { key: "Model",      fixed: true,  hideable: false, minWidth: 150, maxWidth: 340 },
-    { key: "FSC",        fixed: false, hideable: true,  minWidth: 100, maxWidth: 220 },
-    { key: "EFEM",       fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
-    { key: "TM",         fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
-    { key: "PM",         fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
-    { key: "SU",         fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
-    { key: "Harness",    fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
-    { key: "Stage",      fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
-    { key: "Tuning",     fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
-    { key: "생산시작일",  fixed: false, hideable: true,  minWidth: 140, maxWidth: 140 },
-    { key: "Tuning시작일",fixed: false, hideable: true,  minWidth: 140, maxWidth: 140 },
-    { key: "생산완료일",  fixed: false, hideable: true,  minWidth: 140, maxWidth: 140 },
-    { key: "Remark",     fixed: false, hideable: true,  minWidth: 360, maxWidth: 900 }
+    { key: "상태",        fixed: true,  hideable: false, minWidth: 120, maxWidth: 120 },
+    { key: "Lot",         fixed: true,  hideable: false, minWidth: 110, maxWidth: 150 },
+    { key: "CODE",        fixed: true,  hideable: false, minWidth: 110, maxWidth: 150 },
+    { key: "WO",          fixed: true,  hideable: false, minWidth: 140, maxWidth: 200 },
+    { key: "S/N",         fixed: true,  hideable: false, minWidth: 130, maxWidth: 220 },
+    { key: "Customer",    fixed: true,  hideable: false, minWidth: 150, maxWidth: 340 },
+    { key: "Line",        fixed: true,  hideable: false, minWidth: 140, maxWidth: 240 },
+    { key: "Model",       fixed: true,  hideable: false, minWidth: 150, maxWidth: 340 },
+    { key: "FSC",         fixed: false, hideable: true,  minWidth: 100, maxWidth: 220 },
+    { key: "EFEM",        fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
+    { key: "TM",          fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
+    { key: "PM",          fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
+    { key: "SU",          fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
+    { key: "Harness",     fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
+    { key: "Stage",       fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
+    { key: "Tuning",      fixed: false, hideable: true,  minWidth: 100, maxWidth: 180 },
+    { key: "생산시작일",   fixed: false, hideable: true,  minWidth: 140, maxWidth: 140 },
+    { key: "Tuning시작일", fixed: false, hideable: true,  minWidth: 140, maxWidth: 140 },
+    { key: "생산완료일",   fixed: false, hideable: true,  minWidth: 140, maxWidth: 140 },
+    { key: "Remark",      fixed: false, hideable: true,  minWidth: 360, maxWidth: 900 }
   ];
   const ALL_COLUMNS = COLUMN_CONFIGS.map(c => c.key);
   const FIXED_COLUMNS = COLUMN_CONFIGS.filter(c => c.fixed).map(c => c.key);
@@ -42,8 +42,6 @@
   let stickyLeftMap = {};
   let currentRenderedRange = { start: -1, end: -1 };
   let isComposing = false;
-
-  // ★ 열 너비 드래그 리사이즈 상태
   let resizeState = null;
 
   const textMeasureCanvas = document.createElement("canvas");
@@ -54,16 +52,10 @@
     if (v === null || v === undefined) return "";
     return String(v).trim().toLowerCase().replace(/[^0-9a-zA-Z가-힣]+/g, "");
   }
-
   function debounce(fn, delay) {
     let t = null;
-    return function () {
-      const a = arguments;
-      clearTimeout(t);
-      t = setTimeout(() => fn.apply(null, a), delay);
-    };
+    return function () { const a = arguments; clearTimeout(t); t = setTimeout(() => fn.apply(null, a), delay); };
   }
-
   function safeText(v) { return v === null || v === undefined ? "" : String(v); }
 
   function setUserBadge() {
@@ -98,7 +90,7 @@
 
   function computeColumnWidths() {
     ALL_COLUMNS.forEach(col => {
-      if (columnWidths[col]) return; // 사용자가 조절한 너비 유지
+      if (columnWidths[col]) return;
       const cfg = COLUMN_CONFIGS.find(c => c.key === col);
       const minW = cfg ? cfg.minWidth : 100;
       const maxW = cfg ? cfg.maxWidth : 260;
@@ -150,14 +142,11 @@
       const col = cfg.key;
       if (cfg.hideable && !fixedDone) {
         fixedDone = true;
-        const d = document.createElement("div");
-        d.className = "col-chip-divider";
-        bar.appendChild(d);
+        const d = document.createElement("div"); d.className = "col-chip-divider"; bar.appendChild(d);
       }
       const chip = document.createElement("span");
       chip.className = "col-chip" + (NON_HIDEABLE_COLUMNS.has(col) ? " fixed" : (visibleColumns.has(col) ? " on" : ""));
-      chip.textContent = col;
-      chip.dataset.column = col;
+      chip.textContent = col; chip.dataset.column = col;
       if (!NON_HIDEABLE_COLUMNS.has(col)) {
         chip.onclick = function () {
           if (visibleColumns.has(col)) { visibleColumns.delete(col); chip.classList.remove("on"); }
@@ -185,7 +174,6 @@
     applyFilters({ resetScrollTop: true });
   }
 
-  // ★ 헤더 셀 + 리사이즈 핸들
   function buildHeaderRow() {
     const row = document.createElement("div");
     row.className = "table-row header-row";
@@ -193,24 +181,27 @@
       const cell = document.createElement("div");
       cell.className = "table-cell header-cell";
       cell.dataset.col = col;
-      cell.style.width = getColumnWidth(col) + "px";
-      cell.style.minWidth = getColumnWidth(col) + "px";
-      cell.style.position = "relative";
+      const w = getColumnWidth(col);
+      // ★ 셀 너비를 정확히 고정 - flex로 늘어나지 않게
+      cell.style.cssText = `width:${w}px;min-width:${w}px;max-width:${w}px;position:relative;overflow:hidden;box-sizing:border-box;flex-shrink:0;flex-grow:0;`;
       applyStickyStyles(cell, col, "header");
 
+      // 텍스트 라벨
       const label = document.createElement("span");
       label.textContent = col + getSortIndicator(col);
-      label.style.cssText = "flex:1;overflow:hidden;text-overflow:ellipsis;cursor:pointer;";
+      label.style.cssText = "display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;width:100%;padding-right:8px;box-sizing:border-box;";
       label.onclick = () => cycleSort(col);
       cell.appendChild(label);
 
-      // ★ 리사이즈 핸들
+      // ★ 리사이즈 핸들: width:0 으로 레이아웃 공간 차지 안 함
       const handle = document.createElement("div");
-      handle.className = "col-resize-handle";
-      handle.addEventListener("mousedown", function (e) {
+      handle.style.cssText = "position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;z-index:50;background:transparent;";
+      handle.addEventListener("mouseenter", function() { handle.style.background = "rgba(124,58,237,0.35)"; });
+      handle.addEventListener("mouseleave", function() { if (!resizeState) handle.style.background = "transparent"; });
+      handle.addEventListener("mousedown", function(e) {
         e.preventDefault();
         e.stopPropagation();
-        resizeState = { col, startX: e.clientX, startW: getColumnWidth(col) };
+        resizeState = { col, startX: e.clientX, startW: getColumnWidth(col), handle };
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
       });
@@ -220,25 +211,27 @@
     return row;
   }
 
-  // ★ 전역 mousemove/mouseup 리사이즈 처리
-  document.addEventListener("mousemove", function (e) {
+  // ★ 전역 리사이즈 이벤트
+  document.addEventListener("mousemove", function(e) {
     if (!resizeState) return;
     const diff = e.clientX - resizeState.startX;
     const cfg = COLUMN_CONFIGS.find(c => c.key === resizeState.col);
     const minW = cfg ? cfg.minWidth : 60;
     const newW = Math.max(minW, resizeState.startW + diff);
     columnWidths[resizeState.col] = newW;
-    // 해당 컬럼 셀 즉시 업데이트
+    // 해당 컬럼 모든 셀 즉시 업데이트
     document.querySelectorAll(`[data-col="${resizeState.col}"]`).forEach(c => {
       c.style.width = newW + "px";
       c.style.minWidth = newW + "px";
+      c.style.maxWidth = newW + "px";
     });
     rebuildStickyLeftMap();
     syncTableInnerWidth();
   });
 
-  document.addEventListener("mouseup", function () {
+  document.addEventListener("mouseup", function() {
     if (!resizeState) return;
+    if (resizeState.handle) resizeState.handle.style.background = "transparent";
     resizeState = null;
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
@@ -247,7 +240,6 @@
     applyFilters({ resetScrollTop: false });
   });
 
-  // 컬럼 필터 행: 단순 텍스트 입력 (이전 스타일)
   function buildFilterRow() {
     const row = document.createElement("div");
     row.className = "table-row filter-row";
@@ -255,8 +247,8 @@
       const cell = document.createElement("div");
       cell.className = "table-cell filter-cell";
       cell.dataset.col = col;
-      cell.style.width = getColumnWidth(col) + "px";
-      cell.style.minWidth = getColumnWidth(col) + "px";
+      const w = getColumnWidth(col);
+      cell.style.cssText = `width:${w}px;min-width:${w}px;max-width:${w}px;flex-shrink:0;flex-grow:0;box-sizing:border-box;`;
       applyStickyStyles(cell, col, "filter");
 
       const inp = document.createElement("input");
@@ -265,7 +257,6 @@
       inp.placeholder = "필터";
       inp.value = columnFilters[col] || "";
       inp.dataset.column = col;
-
       inp.addEventListener("compositionstart", () => { isComposing = true; });
       inp.addEventListener("compositionend", e => {
         isComposing = false;
@@ -277,7 +268,6 @@
         if (isComposing) return;
         debouncedApplyColumnFilters();
       });
-
       cell.appendChild(inp);
       row.appendChild(cell);
     });
@@ -328,8 +318,7 @@
   }
 
   function fillDetail(targetId, pairs, rowData) {
-    const el = document.getElementById(targetId);
-    el.innerHTML = "";
+    const el = document.getElementById(targetId); el.innerHTML = "";
     pairs.forEach(p => {
       const lab = document.createElement("div"); lab.className = "detail-label"; lab.textContent = p[0];
       const val = document.createElement("div"); val.textContent = rowData[p[1]] || "";
@@ -339,26 +328,25 @@
 
   function openDetailModal(rowData) {
     document.getElementById("modalTitle").textContent = "WO 상세 - " + (rowData["WO"] || "");
-    fillDetail("detailBasic", [["상태","상태"],["Lot","Lot"],["CODE","CODE"],["WO","WO"],["S/N","S/N"],["Customer","Customer"],["Line","Line"],["Model","Model"],["FSC","FSC"]], rowData);
-    fillDetail("detailProcess", [["EFEM","EFEM"],["TM","TM"],["PM","PM"],["SU","SU"],["Harness","Harness"],["Stage","Stage"],["Tuning","Tuning"]], rowData);
-    fillDetail("detailSchedule", [["생산시작일","생산시작일"],["Tuning시작일","Tuning시작일"],["생산완료일","생산완료일"]], rowData);
+    fillDetail("detailBasic",[["상태","상태"],["Lot","Lot"],["CODE","CODE"],["WO","WO"],["S/N","S/N"],["Customer","Customer"],["Line","Line"],["Model","Model"],["FSC","FSC"]], rowData);
+    fillDetail("detailProcess",[["EFEM","EFEM"],["TM","TM"],["PM","PM"],["SU","SU"],["Harness","Harness"],["Stage","Stage"],["Tuning","Tuning"]], rowData);
+    fillDetail("detailSchedule",[["생산시작일","생산시작일"],["Tuning시작일","Tuning시작일"],["생산완료일","생산완료일"]], rowData);
     document.getElementById("detailRemark").textContent = rowData["Remark"] || "";
     document.getElementById("detailModal").classList.add("show");
   }
-
   function closeDetailModal() { document.getElementById("detailModal").classList.remove("show"); }
   window.closeDetailModal = closeDetailModal;
 
   function buildDataRow(rowData, rowIndex) {
     const row = document.createElement("div");
     row.className = "table-row";
-    row.style.cssText = `position:absolute;top:${rowIndex * ROW_HEIGHT}px;height:${ROW_HEIGHT}px;`;
+    row.style.cssText = `position:absolute;top:${rowIndex*ROW_HEIGHT}px;height:${ROW_HEIGHT}px;`;
     getVisibleColumns().forEach(col => {
       const cell = document.createElement("div");
       cell.className = "table-cell data-cell";
       cell.dataset.col = col;
-      cell.style.width = getColumnWidth(col) + "px";
-      cell.style.minWidth = getColumnWidth(col) + "px";
+      const w = getColumnWidth(col);
+      cell.style.cssText = `width:${w}px;min-width:${w}px;max-width:${w}px;flex-shrink:0;flex-grow:0;box-sizing:border-box;`;
       applyStickyStyles(cell, col, "data");
       if (col === "상태") {
         const span = document.createElement("span");
@@ -367,13 +355,10 @@
         cell.appendChild(span);
       } else if (col === "WO") {
         const link = document.createElement("span");
-        link.className = "wo-link";
-        link.textContent = rowData[col] || "";
+        link.className = "wo-link"; link.textContent = rowData[col] || "";
         link.onclick = e => { e.stopPropagation(); openDetailModal(rowData); };
         cell.appendChild(link);
-      } else {
-        cell.textContent = safeText(rowData[col]);
-      }
+      } else { cell.textContent = safeText(rowData[col]); }
       row.appendChild(cell);
     });
     return row;
@@ -396,76 +381,58 @@
     if (!sortState.column || !sortState.direction) return data.slice();
     const col = sortState.column, dir = sortState.direction;
     return data.slice().sort((a, b) => {
-      const av = a[col] || "", bv = b[col] || "";
+      const av = a[col]||"", bv = b[col]||"";
       const ad = Date.parse(av), bd = Date.parse(bv);
       let r = 0;
-      if (!isNaN(ad) && !isNaN(bd) && String(av).length >= 8 && String(bv).length >= 8) r = ad - bd;
+      if (!isNaN(ad)&&!isNaN(bd)&&String(av).length>=8&&String(bv).length>=8) r = ad-bd;
       else {
         const an = Number(av), bn = Number(bv);
-        if (!isNaN(an) && !isNaN(bn) && String(av).trim() && String(bv).trim()) r = an - bn;
-        else r = String(av).localeCompare(String(bv), "ko");
+        if (!isNaN(an)&&!isNaN(bn)&&String(av).trim()&&String(bv).trim()) r = an-bn;
+        else r = String(av).localeCompare(String(bv),"ko");
       }
-      return dir === "asc" ? r : -r;
+      return dir==="asc" ? r : -r;
     });
   }
 
   function applyFilters(options) {
     const opts = Object.assign({ resetScrollTop: true }, options || {});
-
-    const searchText     = normalizeText(document.getElementById("searchText").value);
-    const filterLot      = normalizeText(document.getElementById("filterLot").value);
-    const filterCode     = normalizeText(document.getElementById("filterCode").value);
-    const filterWo       = normalizeText(document.getElementById("filterWo").value);
-    // ★ Assembly BP사: EFEM, TM, PM, SU 검색
-    const filterAssembly = normalizeText(document.getElementById("filterAssemblyBp").value);
-    // ★ Tuning BP사: Tuning 컬럼만 검색
-    const filterTuning   = normalizeText(document.getElementById("filterTuningBp").value);
-    const filterDate     = document.getElementById("filterDate").value;
-    const filterDateFrom = document.getElementById("filterDateFrom").value;
-    const filterDateTo   = document.getElementById("filterDateTo").value;
+    const searchText    = normalizeText(document.getElementById("searchText").value);
+    const filterLot     = normalizeText(document.getElementById("filterLot").value);
+    const filterCode    = normalizeText(document.getElementById("filterCode").value);
+    const filterWo      = normalizeText(document.getElementById("filterWo").value);
+    const filterAssembly= normalizeText(document.getElementById("filterAssemblyBp").value);
+    const filterTuning  = normalizeText(document.getElementById("filterTuningBp").value);
+    const filterDate    = document.getElementById("filterDate").value;
+    const filterDateFrom= document.getElementById("filterDateFrom").value;
+    const filterDateTo  = document.getElementById("filterDateTo").value;
 
     const data = rawData.filter(row => {
-      // 통합검색
       if (searchText) {
-        const full = normalizeText(ALL_COLUMNS.map(c => row[c] || "").join(" "));
+        const full = normalizeText(ALL_COLUMNS.map(c => row[c]||"").join(" "));
         if (!full.includes(searchText)) return false;
       }
-      // Lot / CODE / WO
-      if (filterLot  && !normalizeText(row["Lot"] || "").includes(filterLot))  return false;
-      if (filterCode && !normalizeText(row["CODE"] || "").includes(filterCode)) return false;
-      if (filterWo   && !normalizeText(row["WO"] || "").includes(filterWo))    return false;
-
-      // ★ Assembly BP사: EFEM, TM, PM, SU 중 하나라도 포함
+      if (filterLot  && !normalizeText(row["Lot"]||"").includes(filterLot))  return false;
+      if (filterCode && !normalizeText(row["CODE"]||"").includes(filterCode)) return false;
+      if (filterWo   && !normalizeText(row["WO"]||"").includes(filterWo))    return false;
       if (filterAssembly) {
-        const assemblyVal = normalizeText(
-          [row["EFEM"], row["TM"], row["PM"], row["SU"]].map(v => v || "").join(" ")
-        );
-        if (!assemblyVal.includes(filterAssembly)) return false;
+        const val = normalizeText([row["EFEM"],row["TM"],row["PM"],row["SU"]].map(v=>v||"").join(" "));
+        if (!val.includes(filterAssembly)) return false;
       }
-
-      // ★ Tuning BP사: Tuning 컬럼만
-      if (filterTuning) {
-        if (!normalizeText(row["Tuning"] || "").includes(filterTuning)) return false;
-      }
-
-      // 단일 날짜
+      if (filterTuning && !normalizeText(row["Tuning"]||"").includes(filterTuning)) return false;
       if (filterDate) {
-        const s = row["생산시작일"] || "", e = row["생산완료일"] || "";
-        if (!(s <= filterDate && filterDate <= e) && s !== filterDate && e !== filterDate) return false;
+        const s = row["생산시작일"]||"", e = row["생산완료일"]||"";
+        if (!(s<=filterDate&&filterDate<=e)&&s!==filterDate&&e!==filterDate) return false;
       }
-      // 날짜 범위
-      if (filterDateFrom || filterDateTo) {
-        const s = row["생산시작일"] || "", e = row["생산완료일"] || "";
-        if (filterDateFrom && filterDateTo) { if (e < filterDateFrom || s > filterDateTo) return false; }
-        else if (filterDateFrom) { if (e && e < filterDateFrom) return false; }
-        else if (filterDateTo)   { if (s && s > filterDateTo) return false; }
+      if (filterDateFrom||filterDateTo) {
+        const s = row["생산시작일"]||"", e = row["생산완료일"]||"";
+        if (filterDateFrom&&filterDateTo) { if (e<filterDateFrom||s>filterDateTo) return false; }
+        else if (filterDateFrom) { if (e&&e<filterDateFrom) return false; }
+        else if (filterDateTo)   { if (s&&s>filterDateTo)   return false; }
       }
-
-      // 컬럼 필터 (단순 부분일치)
       for (const col of ALL_COLUMNS) {
-        const f = normalizeText(columnFilters[col] || "");
+        const f = normalizeText(columnFilters[col]||"");
         if (!f) continue;
-        if (!normalizeText(row[col] || "").includes(f)) return false;
+        if (!normalizeText(row[col]||"").includes(f)) return false;
       }
       return true;
     });
@@ -483,82 +450,73 @@
 
   function renderKpis() {
     document.getElementById("kpiTotal").textContent    = filteredData.length.toLocaleString();
-    document.getElementById("kpiPlan").textContent     = filteredData.filter(r => r["상태"] === "생산예정").length.toLocaleString();
-    document.getElementById("kpiAssembly").textContent = filteredData.filter(r => r["상태"] === "조립중").length.toLocaleString();
-    document.getElementById("kpiTuning").textContent   = filteredData.filter(r => r["상태"] === "Tuning중").length.toLocaleString();
+    document.getElementById("kpiPlan").textContent     = filteredData.filter(r=>r["상태"]==="생산예정").length.toLocaleString();
+    document.getElementById("kpiAssembly").textContent = filteredData.filter(r=>r["상태"]==="조립중").length.toLocaleString();
+    document.getElementById("kpiTuning").textContent   = filteredData.filter(r=>r["상태"]==="Tuning중").length.toLocaleString();
   }
 
   function toDateObj(s) {
-    if (!s) return null;
-    const d = new Date(s);
-    if (isNaN(d.getTime())) return null;
-    d.setHours(0, 0, 0, 0); return d;
+    if (!s) return null; const d = new Date(s);
+    if (isNaN(d.getTime())) return null; d.setHours(0,0,0,0); return d;
   }
   function formatDate(d) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   }
-  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); x.setHours(0,0,0,0); return x; }
-  function diffDays(a, b) { return Math.round((b-a)/(24*60*60*1000)); }
-  function isBetween(t, s, e) { return !!(t && s && e && s <= t && t <= e); }
+  function addDays(d,n) { const x=new Date(d); x.setDate(x.getDate()+n); x.setHours(0,0,0,0); return x; }
+  function diffDays(a,b) { return Math.round((b-a)/(24*60*60*1000)); }
+  function isBetween(t,s,e) { return !!(t&&s&&e&&s<=t&&t<=e); }
 
   function renderTimeline() {
-    const wrap = document.getElementById("timelineWrap");
-    wrap.innerHTML = "";
-    const rows = filteredData.map(r => ({
-      label: `${r["Lot"]||""} / ${r["WO"]||""}`, status: r["상태"]||"",
-      gS: toDateObj(r["phase_green_start"]), gE: toDateObj(r["phase_green_end"]),
-      bS: toDateObj(r["phase_blue_start"]),  bE: toDateObj(r["phase_blue_end"])
-    })).filter(r => r.gS || r.bS || r.bE).slice(0, 100);
-
-    if (!rows.length) { wrap.innerHTML = "<div style='padding:12px;'>표시할 일정 데이터가 없습니다.</div>"; return; }
-
-    let minDate = null, maxDate = null;
-    rows.forEach(r => {
-      [r.gS, r.bS].filter(Boolean).forEach(d => { if (!minDate || d < minDate) minDate = d; });
-      [r.gE, r.bE].filter(Boolean).forEach(d => { if (!maxDate || d > maxDate) maxDate = d; });
+    const wrap = document.getElementById("timelineWrap"); wrap.innerHTML = "";
+    const rows = filteredData.map(r=>({
+      label:`${r["Lot"]||""} / ${r["WO"]||""}`, status:r["상태"]||"",
+      gS:toDateObj(r["phase_green_start"]), gE:toDateObj(r["phase_green_end"]),
+      bS:toDateObj(r["phase_blue_start"]),  bE:toDateObj(r["phase_blue_end"])
+    })).filter(r=>r.gS||r.bS||r.bE).slice(0,100);
+    if (!rows.length) { wrap.innerHTML="<div style='padding:12px;'>표시할 일정 데이터가 없습니다.</div>"; return; }
+    let minDate=null, maxDate=null;
+    rows.forEach(r=>{
+      [r.gS,r.bS].filter(Boolean).forEach(d=>{if(!minDate||d<minDate)minDate=d;});
+      [r.gE,r.bE].filter(Boolean).forEach(d=>{if(!maxDate||d>maxDate)maxDate=d;});
     });
-    if (!minDate || !maxDate) { wrap.innerHTML = "<div style='padding:12px;'>표시할 일정 데이터가 없습니다.</div>"; return; }
-
-    const total = diffDays(minDate, maxDate), capped = Math.min(total, 45);
-    const tbl = document.createElement("table"); tbl.className = "timeline-table";
-    const thead = document.createElement("thead"), hr = document.createElement("tr");
-    const fth = document.createElement("th"); fth.className = "label-col"; fth.textContent = "Lot / WO"; hr.appendChild(fth);
-    const today = toDateObj(TODAY_STR);
-    for (let i = 0; i <= capped; i++) {
-      const cur = addDays(minDate, i); const th = document.createElement("th");
-      th.textContent = formatDate(cur).slice(5);
-      if (today && cur.getTime() === today.getTime()) th.classList.add("today-col");
+    if (!minDate||!maxDate) { wrap.innerHTML="<div style='padding:12px;'>표시할 일정 데이터가 없습니다.</div>"; return; }
+    const total=diffDays(minDate,maxDate), capped=Math.min(total,45);
+    const tbl=document.createElement("table"); tbl.className="timeline-table";
+    const thead=document.createElement("thead"), hr=document.createElement("tr");
+    const fth=document.createElement("th"); fth.className="label-col"; fth.textContent="Lot / WO"; hr.appendChild(fth);
+    const today=toDateObj(TODAY_STR);
+    for(let i=0;i<=capped;i++){
+      const cur=addDays(minDate,i); const th=document.createElement("th");
+      th.textContent=formatDate(cur).slice(5);
+      if(today&&cur.getTime()===today.getTime())th.classList.add("today-col");
       hr.appendChild(th);
     }
     thead.appendChild(hr); tbl.appendChild(thead);
-    const tbody = document.createElement("tbody");
-    rows.forEach(r => {
-      const tr = document.createElement("tr");
-      const tdL = document.createElement("td"); tdL.className = "label-col";
-      tdL.textContent = `${r.label} (${r.status})`; tr.appendChild(tdL);
-      for (let i = 0; i <= capped; i++) {
-        const cur = addDays(minDate, i); const td = document.createElement("td");
-        if (today && cur.getTime() === today.getTime()) td.classList.add("today-col");
-        const inner = document.createElement("div"); inner.className = "timeline-cell-inner";
-        if (isBetween(cur, r.bS, r.bE)) {
-          const p = document.createElement("div"); p.className = "timeline-pill pill-blue"; inner.appendChild(p);
-        } else if (isBetween(cur, r.gS, r.gE)) {
-          const p = document.createElement("div"); p.className = "timeline-pill pill-green"; inner.appendChild(p);
-        }
+    const tbody=document.createElement("tbody");
+    rows.forEach(r=>{
+      const tr=document.createElement("tr");
+      const tdL=document.createElement("td"); tdL.className="label-col";
+      tdL.textContent=`${r.label} (${r.status})`; tr.appendChild(tdL);
+      for(let i=0;i<=capped;i++){
+        const cur=addDays(minDate,i); const td=document.createElement("td");
+        if(today&&cur.getTime()===today.getTime())td.classList.add("today-col");
+        const inner=document.createElement("div"); inner.className="timeline-cell-inner";
+        if(isBetween(cur,r.bS,r.bE)){const p=document.createElement("div");p.className="timeline-pill pill-blue";inner.appendChild(p);}
+        else if(isBetween(cur,r.gS,r.gE)){const p=document.createElement("div");p.className="timeline-pill pill-green";inner.appendChild(p);}
         td.appendChild(inner); tr.appendChild(td);
       }
       tbody.appendChild(tr);
     });
     tbl.appendChild(tbody); wrap.appendChild(tbl);
-    if (total > capped) {
-      const note = document.createElement("div"); note.className = "timeline-note";
-      note.textContent = `일정 범위가 길어 최초 46일 구간만 표시했습니다. 전체 범위: ${formatDate(minDate)} ~ ${formatDate(maxDate)}`;
+    if(total>capped){
+      const note=document.createElement("div"); note.className="timeline-note";
+      note.textContent=`일정 범위가 길어 최초 46일 구간만 표시했습니다. 전체 범위: ${formatDate(minDate)} ~ ${formatDate(maxDate)}`;
       wrap.appendChild(note);
     }
   }
 
-  const debouncedApplyFilters = debounce(() => applyFilters({ resetScrollTop: true }), 200);
-  const debouncedApplyColumnFilters = debounce(() => applyFilters({ resetScrollTop: false }), 300);
+  const debouncedApplyFilters = debounce(()=>applyFilters({resetScrollTop:true}), 200);
+  const debouncedApplyColumnFilters = debounce(()=>applyFilters({resetScrollTop:false}), 300);
 
   document.getElementById("searchText").addEventListener("input", debouncedApplyFilters);
   document.getElementById("filterLot").addEventListener("input", debouncedApplyFilters);
@@ -566,17 +524,17 @@
   document.getElementById("filterWo").addEventListener("input", debouncedApplyFilters);
   document.getElementById("filterAssemblyBp").addEventListener("input", debouncedApplyFilters);
   document.getElementById("filterTuningBp").addEventListener("input", debouncedApplyFilters);
-  document.getElementById("filterDate").addEventListener("change", () => applyFilters({ resetScrollTop: true }));
-  document.getElementById("filterDateFrom").addEventListener("change", () => applyFilters({ resetScrollTop: true }));
-  document.getElementById("filterDateTo").addEventListener("change", () => applyFilters({ resetScrollTop: true }));
-  document.getElementById("tableScroll").addEventListener("scroll", () => renderVirtualRows(false));
+  document.getElementById("filterDate").addEventListener("change", ()=>applyFilters({resetScrollTop:true}));
+  document.getElementById("filterDateFrom").addEventListener("change", ()=>applyFilters({resetScrollTop:true}));
+  document.getElementById("filterDateTo").addEventListener("change", ()=>applyFilters({resetScrollTop:true}));
+  document.getElementById("tableScroll").addEventListener("scroll", ()=>renderVirtualRows(false));
   document.getElementById("detailModal").addEventListener("click", closeDetailModal);
-  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetailModal(); });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeDetailModal(); });
 
   const reloadBtn = document.getElementById("reloadBtn");
   if (reloadBtn) {
-    reloadBtn.addEventListener("click", async function () {
-      const res = await fetch("/api/reload-data", { method: "POST", body: new FormData(), credentials: "same-origin" });
+    reloadBtn.addEventListener("click", async function() {
+      const res = await fetch("/api/reload-data",{method:"POST",body:new FormData(),credentials:"same-origin"});
       if (!res.ok) { alert("데이터 재로딩 실패"); return; }
       await loadData(); alert("데이터 재로딩 완료");
     });
