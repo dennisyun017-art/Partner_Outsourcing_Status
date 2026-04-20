@@ -1,146 +1,134 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ app_title }} - 메인 대시보드</title>
-    <link rel="stylesheet" href="/static/css/app.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ app_title }} - 메인 대시보드</title>
+  <link rel="stylesheet" href="/static/css/app.css" />
 </head>
-
 <body>
-    <div id="appPage" class="app-shell dashboard-shell">
-        <div class="topbar">
-            <div class="title-wrap">
-                <h2>{{ app_title }}</h2>
-                <div class="meta">
-                    기준일: <strong>{{ meta.base_date }}</strong>
-                    &nbsp;|&nbsp; 로드시각: <strong>{{ meta.loaded_at }}</strong>
-                    &nbsp;|&nbsp; 버전: <strong>{{ app_version }}</strong>
-                    &nbsp;|&nbsp; 수정일: <strong>{{ app_last_modified }}</strong>
-                </div>
-            </div>
-            <div class="user-box">
-                <span id="userBadge" class="badge"></span>
-                <a class="btn btn-stage" href="/stage">Stage 현황 보기</a>
-                <a class="btn btn-secondary" href="/account/password">비밀번호 변경</a>
-                {% if current_user.role in ['admin', 'manager'] %}
-                <button class="btn btn-secondary" id="reloadBtn" type="button">데이터 재로딩</button>
-                {% endif %}
-                {% if current_user.role == 'admin' %}
-                <a class="btn btn-secondary" href="/admin/upload">데이터 업로드</a>
-                <a class="btn btn-secondary" href="/admin/users">사용자 관리</a>
-                <a class="btn btn-secondary" href="/admin/logs">활동 로그</a>
-                {% endif %}
-                <form method="post" action="/logout" style="margin:0;">
-                    <button class="btn btn-primary" type="submit">로그아웃</button>
-                </form>
-            </div>
+  <div id="appPage" class="app-shell dashboard-shell">
+    <div class="topbar">
+      <div class="title-wrap">
+        <h2>{{ app_title }}</h2>
+        <div class="meta">
+          기준일: <strong>{{ meta.base_date }}</strong>
+          &nbsp;|&nbsp; 로드시각: <strong>{{ meta.loaded_at }}</strong>
+          &nbsp;|&nbsp; 버전: <strong>{{ app_version }}</strong>
+          &nbsp;|&nbsp; 수정일: <strong>{{ app_last_modified }}</strong>
         </div>
-
-        <div class="kpis">
-            <div class="card">
-                <div class="kpi-title">총 건수</div>
-                <div id="kpiTotal" class="kpi-value">0</div>
-            </div>
-            <div class="card">
-                <div class="kpi-title">생산예정</div>
-                <div id="kpiPlan" class="kpi-value">0</div>
-            </div>
-            <div class="card">
-                <div class="kpi-title">조립중</div>
-                <div id="kpiAssembly" class="kpi-value">0</div>
-            </div>
-            <div class="card">
-                <div class="kpi-title">Tuning중</div>
-                <div id="kpiTuning" class="kpi-value">0</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="filters">
-                <div class="field">
-                    <label>통합검색</label>
-                    <input id="searchText" type="text" placeholder="Lot, WO, Customer, Model, Remark 등" />
-                </div>
-                <div class="field">
-                    <label>상태</label>
-                    <select id="filterStatus"></select>
-                </div>
-                <div class="field">
-                    <label>Customer</label>
-                    <select id="filterCustomer"></select>
-                </div>
-                <div class="field">
-                    <label>Line</label>
-                    <select id="filterLine"></select>
-                </div>
-                <div class="field">
-                    <label>Partner 공정 포함값</label>
-                    <input id="filterPartnerText" type="text" placeholder="EFEM, TM, PM, SU, Harness..." />
-                </div>
-                <div class="field">
-                    <label>날짜 범위 (생산시작일~생산완료일 검색)</label>
-                    <input id="filterDate" type="date" />
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="toolbar-row">
-                <h3 class="toolbar-title">데이터 테이블</h3>
-                <div id="columnToggleBox" class="column-toggle-box"></div>
-            </div>
-
-            <div class="table-frame">
-                <div id="tableScroll" class="table-scroll">
-                    <div id="tableInner" class="table-inner">
-                        <div id="tableHeader" class="table-header"></div>
-                        <div id="tableBody" class="table-body"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" style="margin-top:14px;">
-            <h3 class="timeline-card-title">캘린더 / 타임라인</h3>
-            <div class="timeline-wrap" id="timelineWrap"></div>
-            <div class="footer-meta">{{ app_title }} | {{ app_version }} | {{ app_last_modified }} | {{ app_author }}
-            </div>
-        </div>
+      </div>
+      <div class="user-box">
+        <span id="userBadge" class="badge"></span>
+        <a class="btn btn-stage" href="/stage">Stage 현황 보기</a>
+        <a class="btn btn-secondary" href="/account/password">비밀번호 변경</a>
+        {% if current_user.role in ['admin', 'manager'] %}
+        <button class="btn btn-secondary" id="reloadBtn" type="button">데이터 재로딩</button>
+        {% endif %}
+        {% if current_user.role == 'admin' %}
+        <a class="btn btn-secondary" href="/admin/upload">데이터 업로드</a>
+        <a class="btn btn-secondary" href="/admin/users">사용자 관리</a>
+        <a class="btn btn-secondary" href="/admin/logs">활동 로그</a>
+        {% endif %}
+        <form method="post" action="/logout" style="margin:0;">
+          <button class="btn btn-primary" type="submit">로그아웃</button>
+        </form>
+      </div>
     </div>
 
-    <div id="detailModal" class="modal-backdrop">
-        <div class="modal-panel" onclick="event.stopPropagation()">
-            <div class="modal-topbar">
-                <h3 id="modalTitle" class="modal-title">상세정보</h3>
-                <button class="modal-close" onclick="window.closeDetailModal()">닫기</button>
-            </div>
-            <div class="detail-grid">
-                <div class="detail-card">
-                    <h4>기본 정보</h4>
-                    <div id="detailBasic" class="detail-list"></div>
-                </div>
-                <div class="detail-card">
-                    <h4>공정 정보</h4>
-                    <div id="detailProcess" class="detail-list"></div>
-                </div>
-                <div class="detail-card">
-                    <h4>일정 정보</h4>
-                    <div id="detailSchedule" class="detail-list"></div>
-                </div>
-                <div class="detail-card">
-                    <h4>비고</h4>
-                    <div id="detailRemark" class="remark-box"></div>
-                </div>
-            </div>
-        </div>
+    <div class="kpis">
+      <div class="card"><div class="kpi-title">총 건수</div><div id="kpiTotal" class="kpi-value">0</div></div>
+      <div class="card"><div class="kpi-title">생산예정</div><div id="kpiPlan" class="kpi-value">0</div></div>
+      <div class="card"><div class="kpi-title">조립중</div><div id="kpiAssembly" class="kpi-value">0</div></div>
+      <div class="card"><div class="kpi-title">Tuning중</div><div id="kpiTuning" class="kpi-value">0</div></div>
     </div>
 
-    <script>
-        window.APP_BOOTSTRAP = {{ { 'current_user': current_user, 'meta': meta, 'app_title': app_title, 'app_version': app_version, 'app_last_modified': app_last_modified, 'app_author': app_author }| tojson }};
-    </script>
-    <script src="/static/js/dashboard.js"></script>
+    <div class="card">
+      <div class="filters">
+        <div class="field">
+          <label>통합검색</label>
+          <input id="searchText" type="text" placeholder="Lot, WO, Customer, Model, Remark 등" />
+        </div>
+        <div class="field">
+          <label>상태</label>
+          <div class="tag-filter-wrap" id="tagWrap_상태">
+            <div class="tag-list" id="tagList_상태"></div>
+            <input class="tag-input" id="tagInput_상태" type="text" placeholder="입력 후 Enter" data-filter="상태" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Customer</label>
+          <div class="tag-filter-wrap" id="tagWrap_Customer">
+            <div class="tag-list" id="tagList_Customer"></div>
+            <input class="tag-input" id="tagInput_Customer" type="text" placeholder="입력 후 Enter" data-filter="Customer" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Line</label>
+          <div class="tag-filter-wrap" id="tagWrap_Line">
+            <div class="tag-list" id="tagList_Line"></div>
+            <input class="tag-input" id="tagInput_Line" type="text" placeholder="입력 후 Enter" data-filter="Line" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Partner 공정 포함값</label>
+          <input id="filterPartnerText" type="text" placeholder="EFEM, TM, PM, SU, Harness..." />
+        </div>
+        <div class="field">
+          <label>단일 날짜 (생산시작일~생산완료일 검색)</label>
+          <input id="filterDate" type="date" />
+        </div>
+        <div class="field">
+          <label>날짜 범위 검색 (시작일 ~ 종료일)</label>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input id="filterDateFrom" type="date" style="flex:1;" />
+            <span style="color:#6b7280; font-size:13px;">~</span>
+            <input id="filterDateTo" type="date" style="flex:1;" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar-row">
+        <h3 class="toolbar-title">데이터 테이블</h3>
+        <div id="columnToggleBox" class="column-toggle-box"></div>
+      </div>
+      <div class="table-frame">
+        <div id="tableScroll" class="table-scroll">
+          <div id="tableInner" class="table-inner">
+            <div id="tableHeader" class="table-header"></div>
+            <div id="tableBody" class="table-body"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3 class="timeline-card-title">캘린더 / 타임라인</h3>
+      <div class="timeline-wrap" id="timelineWrap"></div>
+      <div class="footer-meta">{{ app_title }} | {{ app_version }} | {{ app_last_modified }} | {{ app_author }}</div>
+    </div>
+  </div>
+
+  <div id="detailModal" class="modal-backdrop">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <div class="modal-topbar">
+        <h3 id="modalTitle" class="modal-title">상세정보</h3>
+        <button class="modal-close" onclick="window.closeDetailModal()">닫기</button>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-card"><h4>기본 정보</h4><div id="detailBasic" class="detail-list"></div></div>
+        <div class="detail-card"><h4>공정 정보</h4><div id="detailProcess" class="detail-list"></div></div>
+        <div class="detail-card"><h4>일정 정보</h4><div id="detailSchedule" class="detail-list"></div></div>
+        <div class="detail-card"><h4>비고</h4><div id="detailRemark" class="remark-box"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.APP_BOOTSTRAP = {{ { 'current_user': current_user, 'meta': meta, 'app_title': app_title, 'app_version': app_version, 'app_last_modified': app_last_modified, 'app_author': app_author }| tojson }};
+  </script>
+  <script src="/static/js/dashboard.js"></script>
 </body>
-
 </html>
