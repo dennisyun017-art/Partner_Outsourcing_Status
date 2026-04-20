@@ -835,3 +835,19 @@
   padding: 2px 0;
   height: 22px;
 }
+
+/* ===== 열 너비 리사이즈 핸들 ===== */
+.col-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+}
+.col-resize-handle:hover {
+  background: rgba(124, 58, 237, 0.3);
+  border-radius: 2px;
+}
