@@ -164,6 +164,18 @@
     max-width: 100% !important;
   }
 
+/* ★ 모바일: sticky 틀고정 완전 해제 */
+  .sticky-col {
+    position: static !important;
+    left: auto !important;
+    z-index: auto !important;
+    box-shadow: none !important;
+  }
+  .sticky-shadow { box-shadow: none !important; }
+  .sticky-divider { box-shadow: none !important; }
+  .header-row .sticky-col { position: static !important; background: #ede9fe !important; }
+  .filter-row .sticky-col  { position: static !important; background: #faf5ff !important; }
+  
   /* 컬럼 토글 */
   .column-chip-bar { flex-wrap: wrap; }
   .col-chip { font-size: 10px; padding: 2px 8px; }
