@@ -51,3 +51,30 @@
     grid-template-columns: repeat(4, minmax(100px, 1fr));
   }
 }
+
+/* ===== Stage 테이블 스타일 강화 (specificity 우선순위 보정) ===== */
+.stage-table-wrap table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  background: white !important;
+  font-size: 13px !important;
+}
+.stage-table-wrap th,
+.stage-table-wrap td {
+  padding: 9px 10px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  font-size: 13px !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  font-weight: normal !important;
+}
+.stage-table-wrap thead th {
+  position: sticky !important;
+  top: 0 !important;
+  background: #f9fafb !important;
+  z-index: 1 !important;
+  font-weight: 700 !important;
+  color: #374151 !important;
+}
+.stage-table-wrap tbody tr { cursor: pointer; }
+.stage-table-wrap tbody tr:hover { background: #eff6ff !important; }
