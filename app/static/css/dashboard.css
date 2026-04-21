@@ -78,3 +78,45 @@
 }
 .stage-table-wrap tbody tr { cursor: pointer; }
 .stage-table-wrap tbody tr:hover { background: #eff6ff !important; }
+
+/* ===== 모바일 반응형 수정 ===== */
+@media (max-width: 768px) {
+  /* 테이블 스크롤 영역: 가로 스크롤로 고정 */
+  .table-scroll {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    height: 400px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* 테이블 내부가 페이지 밖으로 나가지 않도록 */
+  .table-frame {
+    overflow: hidden !important;
+    max-width: 100% !important;
+  }
+  /* 앱 전체 가로 넘침 방지 */
+  .app-shell {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+  /* KPI 카드 2열 */
+  .kpis {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* 필터 1열로 */
+  .filters {
+    grid-template-columns: 1fr !important;
+  }
+  /* 상단바 버튼 줄바꿈 */
+  .user-box {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .topbar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  /* 컬럼 토글 칩 줄바꿈 */
+  .column-chip-bar {
+    flex-wrap: wrap !important;
+  }
+}
