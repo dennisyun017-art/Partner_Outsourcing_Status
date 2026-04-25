@@ -516,7 +516,9 @@
                         for (const key in row) {
                             const val = row[key];
                             if (val instanceof Date) {
-                                obj[key] = val.toISOString().split('T')[0];
+                                const tzOffset = val.getTimezoneOffset() * 60000;
+                                const localDate = new Date(val.getTime() - tzOffset);
+                                obj[key] = localDate.toISOString().split('T')[0];
                             } else if (val === '' || val === undefined) {
                                 obj[key] = null;
                             } else {
