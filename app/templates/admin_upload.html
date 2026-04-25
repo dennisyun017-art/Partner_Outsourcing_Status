@@ -507,7 +507,7 @@
             const reader = new FileReader();
             reader.onload = function (evt) {
                 try {
-                    const wb = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
+                    const wb = XLSX.read(evt.target.result, { type: 'binary', cellDates: false });
                     const ws = wb.Sheets['MPS'] || wb.Sheets[wb.SheetNames[0]];
                     const raw = XLSX.utils.sheet_to_json(ws, { defval: null });
 
@@ -515,13 +515,13 @@
                         const obj = {};
                         for (const key in row) {
                             const val = row[key];
-                            if (val instanceof Date) {
-                                // XLSX cellDates:true 는 이미 로컬 시간으로 변환됨
-                                // UTC 기준 날짜 문자열 추출 (연/월/일 직접 추출)
-                                const y = val.getFullYear();
-                                const m = String(val.getMonth() + 1).padStart(2, '0');
-                                const d = String(val.getDate()).padStart(2, '0');
-                                obj[key] = `${y}-${m}-${d}`;
+                            if (typeof val === 'number' && val > 40000 && val < 60000) {
+                                // ★ 엑셀 날짜 시리얼 직접 변환 (타임존 무관, 정확)
+                                const epoch = new Date(Date.UTC(1899, 11, 30));
+                                const dt = new Date(epoch.getTime() + Math.floor(val) * 86400000);
+                                obj[key] = dt.getUTCFullYear() + '-' +
+                                    String(dt.getUTCMonth() + 1).padStart(2, '0') + '-' +
+                                    String(dt.getUTCDate()).padStart(2, '0');
                             } else if (val === '' || val === undefined) {
                                 obj[key] = null;
                             } else {
