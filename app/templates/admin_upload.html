@@ -516,9 +516,12 @@
                         for (const key in row) {
                             const val = row[key];
                             if (val instanceof Date) {
-                                const tzOffset = val.getTimezoneOffset() * 60000;
-                                const localDate = new Date(val.getTime() - tzOffset);
-                                obj[key] = localDate.toISOString().split('T')[0];
+                                // XLSX cellDates:true 는 이미 로컬 시간으로 변환됨
+                                // UTC 기준 날짜 문자열 추출 (연/월/일 직접 추출)
+                                const y = val.getFullYear();
+                                const m = String(val.getMonth() + 1).padStart(2, '0');
+                                const d = String(val.getDate()).padStart(2, '0');
+                                obj[key] = `${y}-${m}-${d}`;
                             } else if (val === '' || val === undefined) {
                                 obj[key] = null;
                             } else {
