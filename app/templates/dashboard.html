@@ -112,15 +112,35 @@
   <div class="card" style="margin-bottom:14px;">
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <h3 style="margin:0; font-size:16px;">BP사 현황</h3>
-      <div id="bpGroupFilter" style="display:flex; gap:6px;">
-        <button class="bp-filter-btn active" data-group="all">전체</button>
-        <button class="bp-filter-btn" data-group="PSK">PSK (WC*)</button>
-        <button class="bp-filter-btn" data-group="PSKH">PSKH (HC*)</button>
-      </div>
+<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex:1;">
+  <div id="bpGroupFilter" style="display:flex; gap:6px;">
+    <button class="bp-filter-btn active" data-group="all">전체</button>
+    <button class="bp-filter-btn" data-group="PSK">PSK (WC*)</button>
+    <button class="bp-filter-btn" data-group="PSKH">PSKH (HC*)</button>
+  </div>
+  <input id="bpLotFilter" type="text" placeholder="Lot 번호 입력..."
+    style="padding:5px 12px;border:1px solid #d1d5db;border-radius:20px;font-size:13px;width:180px;outline:none;" />
+</div>
       <button class="btn btn-secondary" id="bpBackBtn" type="button" style="margin-left:auto;">← 메인으로</button>
     </div>
   </div>
+<div id="bpKpis" style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px;">
+  <div class="card" style="padding:16px 20px;">
+    <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">총 배정 건수</div>
+    <div id="bpKpiTotal" style="font-size:28px;font-weight:700;color:#7c3aed;">0</div>
+  </div>
+  <div class="card" style="padding:16px 20px;">
+    <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">PSK (WC*)</div>
+    <div id="bpKpiPsk" style="font-size:28px;font-weight:700;color:#2563eb;">0</div>
+  </div>
+  <div class="card" style="padding:16px 20px;">
+    <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">PSKH (HC*)</div>
+    <div id="bpKpiPskh" style="font-size:28px;font-weight:700;color:#d97706;">0</div>
+  </div>
+</div>
 
+<div id="bpCards" style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px;"></div>
+  
   <div id="bpCards" style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px;"></div>
 
   <div class="card">
