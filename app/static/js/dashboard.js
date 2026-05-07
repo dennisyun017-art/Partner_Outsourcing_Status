@@ -589,6 +589,8 @@ const BP_ORDER = ["이지스", "SAM", "아셈", "SE&T", "HTC", "나우", "금송
 
 let bpCurrentGroup = "all";
 let bpCurrentLot = "";
+let bpDateFrom = "";
+let bpDateTo = "";
 
 function getWoGroup(wo) {
   const w = String(wo || "").toUpperCase();
