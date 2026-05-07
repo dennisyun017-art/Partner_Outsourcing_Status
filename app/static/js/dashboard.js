@@ -585,8 +585,10 @@
   }
 // ═══ BP사 현황 ═══════════════════════════════════════════════
 const BP_PROCESSES = ["EFEM", "TM", "PM", "SU", "Harness", "Tuning"];
+const BP_ORDER = ["이지스", "SAM", "아셈", "SE&T", "HTC", "나우", "금송"];
 
-let bpCurrentGroup = "all"; // 현재 선택된 그룹 필터
+let bpCurrentGroup = "all";
+let bpCurrentLot = "";
 
 function getWoGroup(wo) {
   const w = String(wo || "").toUpperCase();
@@ -596,10 +598,13 @@ function getWoGroup(wo) {
 }
 
 function computeBpSummary(group) {
-  // group: "all" | "PSK" | "PSKH"
   const source = rawData.filter(row => {
-    if (group === "all") return true;
-    return getWoGroup(row["WO"]) === group;
+    if (group !== "all" && getWoGroup(row["WO"]) !== group) return false;
+    if (bpCurrentLot) {
+      const lot = String(row["Lot"] || "").toLowerCase();
+      if (!lot.includes(bpCurrentLot.toLowerCase())) return false;
+    }
+    return true;
   });
 
   // { "SAM": { EFEM: 3, TM: 2, ... }, ... }
@@ -621,6 +626,37 @@ function computeBpSummary(group) {
 function renderBpCards(summary) {
   const container = document.getElementById("bpCards");
   container.innerHTML = "";
+
+  // KPI 업데이트
+  const allSource = rawData.filter(row => {
+    if (bpCurrentLot) {
+      const lot = String(row["Lot"] || "").toLowerCase();
+      if (!lot.includes(bpCurrentLot.toLowerCase())) return false;
+    }
+    return true;
+  });
+  const countAll = allSource.reduce((s, row) => {
+    return s + BP_PROCESSES.filter(p => String(row[p] || "").trim()).length;
+  }, 0);
+  const countPsk  = allSource.filter(r => getWoGroup(r["WO"]) === "PSK").reduce((s, row) =>
+    s + BP_PROCESSES.filter(p => String(row[p] || "").trim()).length, 0);
+  const countPskh = allSource.filter(r => getWoGroup(r["WO"]) === "PSKH").reduce((s, row) =>
+    s + BP_PROCESSES.filter(p => String(row[p] || "").trim()).length, 0);
+  document.getElementById("bpKpiTotal").textContent = countAll;
+  document.getElementById("bpKpiPsk").textContent   = countPsk;
+  document.getElementById("bpKpiPskh").textContent  = countPskh;
+
+  // BP_ORDER 순서로 정렬, 없는 BP사는 뒤에 추가, "-" 제외
+  const allBp = Object.keys(summary).filter(bp => bp && bp !== "-");
+  const ordered = [
+    ...BP_ORDER.filter(bp => allBp.includes(bp)),
+    ...allBp.filter(bp => !BP_ORDER.includes(bp)).sort()
+  ];
+
+  if (!ordered.length) {
+    container.innerHTML = "<div style='padding:16px;color:#6b7280;'>데이터가 없습니다.</div>";
+    return;
+  }
   const bpList = Object.keys(summary).sort();
   if (!bpList.length) {
     container.innerHTML = "<div style='padding:16px;color:#6b7280;'>데이터가 없습니다.</div>";
@@ -675,7 +711,11 @@ function renderBpCards(summary) {
 function renderBpMatrix(summary) {
   const table = document.getElementById("bpMatrix");
   table.innerHTML = "";
-  const bpList = Object.keys(summary).sort();
+  const allBp = Object.keys(summary).filter(bp => bp && bp !== "-");
+  const bpList = [
+    ...BP_ORDER.filter(bp => allBp.includes(bp)),
+    ...allBp.filter(bp => !BP_ORDER.includes(bp)).sort()
+  ];
 
   // 헤더 행
   const thead = document.createElement("thead");
