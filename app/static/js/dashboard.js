@@ -600,14 +600,49 @@ function getWoGroup(wo) {
 }
 
 function computeBpSummary(group) {
+  // partner 역할이면 자기 BP사 데이터만
+  const myPartner = (CURRENT_USER.role === "partner" && CURRENT_USER.partner)
+    ? CURRENT_USER.partner : null;
+
   const source = rawData.filter(row => {
+    // WO 그룹 필터 (PSK/PSKH)
     if (group !== "all" && getWoGroup(row["WO"]) !== group) return false;
+    // Lot 필터
     if (bpCurrentLot) {
       const lot = String(row["Lot"] || "").toLowerCase();
       if (!lot.includes(bpCurrentLot.toLowerCase())) return false;
     }
+    // 날짜 범위 필터 (생산시작일 기준)
+    if (bpDateFrom || bpDateTo) {
+      const s = row["생산시작일"] || "";
+      const e = row["생산완료일"] || "";
+      if (bpDateFrom && bpDateTo) {
+        if (e < bpDateFrom || s > bpDateTo) return false;
+      } else if (bpDateFrom) {
+        if (e && e < bpDateFrom) return false;
+      } else if (bpDateTo) {
+        if (s && s > bpDateTo) return false;
+      }
+    }
     return true;
   });
+
+  const summary = {};
+  source.forEach(row => {
+    BP_PROCESSES.forEach(proc => {
+      const bp = String(row[proc] || "").trim();
+      if (!bp) return;
+      // partner 역할이면 자기 BP사 공정만 집계
+      if (myPartner && bp !== myPartner) return;
+      if (!summary[bp]) {
+        summary[bp] = {};
+        BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
+      }
+      summary[bp][proc]++;
+    });
+  });
+  return summary;
+}
 
   // { "SAM": { EFEM: 3, TM: 2, ... }, ... }
   const summary = {};
@@ -629,21 +664,37 @@ function renderBpCards(summary) {
   const container = document.getElementById("bpCards");
   container.innerHTML = "";
 
-  // KPI 업데이트
+// KPI 업데이트 (partner 역할이면 자기 BP사만)
+  const myPartner = (CURRENT_USER.role === "partner" && CURRENT_USER.partner)
+    ? CURRENT_USER.partner : null;
+
   const allSource = rawData.filter(row => {
     if (bpCurrentLot) {
       const lot = String(row["Lot"] || "").toLowerCase();
       if (!lot.includes(bpCurrentLot.toLowerCase())) return false;
     }
+    if (bpDateFrom || bpDateTo) {
+      const s = row["생산시작일"] || "";
+      const e = row["생산완료일"] || "";
+      if (bpDateFrom && bpDateTo) { if (e < bpDateFrom || s > bpDateTo) return false; }
+      else if (bpDateFrom) { if (e && e < bpDateFrom) return false; }
+      else if (bpDateTo) { if (s && s > bpDateTo) return false; }
+    }
     return true;
   });
-  const countAll = allSource.reduce((s, row) => {
-    return s + BP_PROCESSES.filter(p => String(row[p] || "").trim()).length;
-  }, 0);
-  const countPsk  = allSource.filter(r => getWoGroup(r["WO"]) === "PSK").reduce((s, row) =>
-    s + BP_PROCESSES.filter(p => String(row[p] || "").trim()).length, 0);
-  const countPskh = allSource.filter(r => getWoGroup(r["WO"]) === "PSKH").reduce((s, row) =>
-    s + BP_PROCESSES.filter(p => String(row[p] || "").trim()).length, 0);
+
+  // partner면 자기 공정 건수만 KPI에 반영
+  function countBpProcesses(rows) {
+    return rows.reduce((s, row) => {
+      return s + BP_PROCESSES.filter(p => {
+        const bp = String(row[p] || "").trim();
+        return bp && (!myPartner || bp === myPartner);
+      }).length;
+    }, 0);
+  }
+  const countAll  = countBpProcesses(allSource);
+  const countPsk  = countBpProcesses(allSource.filter(r => getWoGroup(r["WO"]) === "PSK"));
+  const countPskh = countBpProcesses(allSource.filter(r => getWoGroup(r["WO"]) === "PSKH"));
   document.getElementById("bpKpiTotal").textContent = countAll;
   document.getElementById("bpKpiPsk").textContent   = countPsk;
   document.getElementById("bpKpiPskh").textContent  = countPskh;
@@ -829,10 +880,36 @@ function showMainView() {
     });
   });
 
-  const lotInput = document.getElementById("bpLotFilter");
+const lotInput = document.getElementById("bpLotFilter");
   if (lotInput) {
     lotInput.addEventListener("input", function () {
       bpCurrentLot = this.value.trim();
+      refreshBpView();
+    });
+  }
+
+  const dateFrom = document.getElementById("bpDateFrom");
+  if (dateFrom) {
+    dateFrom.addEventListener("change", function () {
+      bpDateFrom = this.value;
+      refreshBpView();
+    });
+  }
+
+  const dateTo = document.getElementById("bpDateTo");
+  if (dateTo) {
+    dateTo.addEventListener("change", function () {
+      bpDateTo = this.value;
+      refreshBpView();
+    });
+  }
+
+  const dateReset = document.getElementById("bpDateReset");
+  if (dateReset) {
+    dateReset.addEventListener("click", function () {
+      bpDateFrom = ""; bpDateTo = "";
+      if (dateFrom) dateFrom.value = "";
+      if (dateTo) dateTo.value = "";
       refreshBpView();
     });
   }
