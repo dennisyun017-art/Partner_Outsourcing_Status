@@ -676,10 +676,10 @@
 
       // 세로 바 차트 영역
       const body = document.createElement("div");
-      body.style.cssText = "padding:12px 14px 10px;";
+      body.style.cssText = "padding:14px 16px 12px;";
 
       const barGroup = document.createElement("div");
-      barGroup.style.cssText = "display:flex;gap:6px;align-items:flex-end;height:80px;justify-content:space-around;margin-bottom:6px;";
+      barGroup.style.cssText = "display:flex;gap:10px;align-items:flex-end;height:100px;justify-content:space-around;margin-bottom:8px;";
 
       BP_PROCESSES.forEach(proc => {
         const cnt = data[proc];
@@ -687,21 +687,25 @@
         const barColor = proc === "Tuning" ? TUNING_COLOR : color;
 
         const col = document.createElement("div");
-        col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;";
+        col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;";
 
+        // 수치 (더 크게)
         const valEl = document.createElement("span");
-        valEl.style.cssText = "font-size:11px;font-weight:500;color:var(--color-text-primary);line-height:1;";
+        valEl.style.cssText = "font-size:13px;font-weight:500;color:var(--color-text-primary);line-height:1;";
         valEl.textContent = cnt;
 
+        // 바 래퍼 + 얇은 바
         const barWrap = document.createElement("div");
-        barWrap.style.cssText = "width:100%;display:flex;align-items:flex-end;height:60px;";
+        barWrap.style.cssText = "width:100%;display:flex;align-items:flex-end;justify-content:center;height:70px;";
 
         const bar = document.createElement("div");
-        bar.style.cssText = `width:100%;height:${Math.max(pct, cnt > 0 ? 2 : 0)}%;background:${barColor};border-radius:3px 3px 0 0;`;
+        // 바 너비를 40%로 고정해서 얇게 표현
+        bar.style.cssText = `width:40%;height:${Math.max(pct, cnt > 0 ? 3 : 0)}%;background:${barColor};border-radius:3px 3px 0 0;`;
         barWrap.appendChild(bar);
 
+        // 공정 라벨 (더 크게)
         const labelEl = document.createElement("span");
-        labelEl.style.cssText = "font-size:10px;color:var(--color-text-secondary);white-space:nowrap;";
+        labelEl.style.cssText = "font-size:12px;color:var(--color-text-secondary);white-space:nowrap;";
         labelEl.textContent = proc === "Harness" ? "Hrn" : proc === "Tuning" ? "Tng" : proc;
 
         col.appendChild(valEl);
@@ -713,7 +717,7 @@
       body.appendChild(barGroup);
 
       const baseline = document.createElement("div");
-      baseline.style.cssText = "border-top:0.5px solid var(--color-border-tertiary);margin:0 -14px;";
+      baseline.style.cssText = "border-top:0.5px solid var(--color-border-tertiary);margin:0 -16px;";
       body.appendChild(baseline);
 
       card.appendChild(body);
