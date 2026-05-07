@@ -21,6 +21,7 @@
       <div class="user-box">
         <span id="userBadge" class="badge"></span>
         <a class="btn btn-stage" href="/stage">Stage 현황 보기</a>
+        <button class="btn btn-secondary" id="mainPdfBtn" type="button">📄 PDF 저장</button>
         <button class="btn btn-secondary" id="bpViewBtn" type="button">BP사 현황 보기</button>
         <a class="btn btn-secondary" href="/account/password">비밀번호 변경</a>
         {% if current_user.role in ['admin', 'manager'] %}
@@ -107,6 +108,8 @@
     </div>
   </div>
 
+<!-- 인쇄용 테이블 (평소엔 숨김) -->
+<div id="printTable" style="display:none;"></div>
 <!-- ═══ BP사 현황 뷰 ═══════════════════════════════ -->
 <div id="bpView" style="display:none;">
   <div class="card" style="margin-bottom:14px;">
@@ -121,6 +124,7 @@
   <input id="bpLotFilter" type="text" placeholder="Lot 번호 입력..."
     style="padding:5px 12px;border:1px solid #d1d5db;border-radius:20px;font-size:13px;width:180px;outline:none;" />
 </div>
+      <button class="btn btn-secondary" id="bpPdfBtn" type="button">📄 PDF 저장</button>
       <button class="btn btn-secondary" id="bpBackBtn" type="button" style="margin-left:auto;">← 메인으로</button>
     </div>
   </div>
