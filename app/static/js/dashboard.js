@@ -624,7 +624,7 @@
         const isMyLot = assemblyProcs.some(p => String(row[p] || "").trim() === myPartner);
         if (!isMyLot) return;
 
-        // 내 조립 공정 집계
+        // 내 조립 공정 집계 → 내 카드
         assemblyProcs.forEach(proc => {
           const bp = String(row[proc] || "").trim();
           if (bp !== myPartner) return;
@@ -632,16 +632,17 @@
           summary[myPartner][proc]++;
         });
 
-        // Tuning이 MO/M-FAB 등 외주 Tuning BP사면 → 내 카드의 Tuning에 포함
         const tuningBp = String(row["Tuning"] || "").trim();
-        if (tuningBp && TUNING_ONLY_BPS.includes(tuningBp)) {
-          ensureBp(myPartner);
-          summary[myPartner]["Tuning"]++;
-        }
-        // Tuning이 내 BP사 이름이면 그대로 집계
-        if (tuningBp === myPartner) {
-          ensureBp(myPartner);
-          summary[myPartner]["Tuning"]++;
+        if (tuningBp) {
+          if (TUNING_ONLY_BPS.includes(tuningBp)) {
+            // MO/M-FAB 등 외주 Tuning → MO 카드에 Tuning 집계 (별도 카드)
+            ensureBp(tuningBp);
+            summary[tuningBp]["Tuning"]++;
+          } else if (tuningBp === myPartner) {
+            // Tuning이 내 BP사면 내 카드에 집계
+            ensureBp(myPartner);
+            summary[myPartner]["Tuning"]++;
+          }
         }
 
       } else {
@@ -668,7 +669,17 @@
   }
 
   function getBpOrdered(summary) {
+    const myPartner = getMyPartner();
     const allBp = Object.keys(summary).filter(bp => bp && bp !== "-");
+
+    if (myPartner) {
+      // partner: 내 카드 → MO/M-FAB 카드 → 나머지
+      const mine = allBp.filter(bp => bp === myPartner);
+      const tuningOnly = allBp.filter(bp => TUNING_ONLY_BPS.includes(bp));
+      const others = allBp.filter(bp => bp !== myPartner && !TUNING_ONLY_BPS.includes(bp)).sort();
+      return [...mine, ...tuningOnly, ...others];
+    }
+
     return [
       ...BP_ORDER.filter(bp => allBp.includes(bp)),
       ...allBp.filter(bp => !BP_ORDER.includes(bp)).sort()
