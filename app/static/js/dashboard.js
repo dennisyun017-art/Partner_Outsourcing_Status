@@ -653,21 +653,14 @@ function renderBpCards(summary) {
     ...allBp.filter(bp => !BP_ORDER.includes(bp)).sort()
   ];
 
-  if (!ordered.length) {
-    container.innerHTML = "<div style='padding:16px;color:#6b7280;'>데이터가 없습니다.</div>";
-    return;
-  }
-  const bpList = Object.keys(summary).sort();
-  if (!bpList.length) {
+if (!ordered.length) {
     container.innerHTML = "<div style='padding:16px;color:#6b7280;'>데이터가 없습니다.</div>";
     return;
   }
 
   const CARD_COLORS = [
-    "#7C3AED","#1D9E75","#D85A30","#378ADD","#BA7517","#D4537E","#6B7280"
-  ];
 
-  bpList.forEach((bp, idx) => {
+  ordered.forEach((bp, idx) => {
     const data = summary[bp];
     const total = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
     const maxVal = Math.max(...BP_PROCESSES.map(p => data[p]), 1);
@@ -735,7 +728,7 @@ function renderBpMatrix(summary) {
   const colTotals = {};
   BP_PROCESSES.forEach(p => { colTotals[p] = 0; });
 
-  bpList.forEach((bp, idx) => {
+  ordered.forEach((bp, idx) => {
     const data = summary[bp];
     const rowTotal = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
     const tr = document.createElement("tr");
@@ -814,16 +807,13 @@ function showMainView() {
 }
 
 // 이벤트 연결 (DOM 로드 후 실행)
-document.addEventListener("DOMContentLoaded", function () {
-  // BP사 현황 버튼
+(function initBpEvents() {
   const bpViewBtn = document.getElementById("bpViewBtn");
   if (bpViewBtn) bpViewBtn.addEventListener("click", showBpView);
 
-  // 메인으로 버튼
   const bpBackBtn = document.getElementById("bpBackBtn");
   if (bpBackBtn) bpBackBtn.addEventListener("click", showMainView);
 
-  // PSK / PSKH / 전체 필터 버튼
   const filterBtns = document.querySelectorAll(".bp-filter-btn");
   filterBtns.forEach(btn => {
     btn.addEventListener("click", function () {
@@ -833,7 +823,15 @@ document.addEventListener("DOMContentLoaded", function () {
       refreshBpView();
     });
   });
-});
+
+  const lotInput = document.getElementById("bpLotFilter");
+  if (lotInput) {
+    lotInput.addEventListener("input", function () {
+      bpCurrentLot = this.value.trim();
+      refreshBpView();
+    });
+  }
+})();
 // ═══ BP사 현황 끝 ═══════════════════════════════════════════
   loadData();
 })();
