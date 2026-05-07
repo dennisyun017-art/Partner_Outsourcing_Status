@@ -1,2 +1,15 @@
 @import url("./common.css");
 @import url("./dashboard.css");
+/* BP사 필터 버튼 */
+.bp-filter-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.bp-filter-btn:hover { border-color: #7c3aed; color: #7c3aed; }
+.bp-filter-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
