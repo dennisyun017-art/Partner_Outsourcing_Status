@@ -13,3 +13,58 @@
 }
 .bp-filter-btn:hover { border-color: #7c3aed; color: #7c3aed; }
 .bp-filter-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+/* ═══ PDF 인쇄 스타일 ═══════════════════════════════ */
+@media print {
+  /* 기본 레이아웃 */
+  body { background: white !important; }
+
+  /* 화면용 요소 숨기기 */
+  .topbar,
+  .filters,
+  .column-toggle-box,
+  .table-frame,
+  .timeline-wrap,
+  .footer-meta,
+  #detailModal,
+  .btn,
+  .bp-filter-btn,
+  #bpLotFilter { display: none !important; }
+
+  /* 인쇄용 테이블 표시 */
+  #printTable { display: block !important; }
+  #printBpSection { display: block !important; }
+
+  /* 카드 스타일 유지 */
+  .card { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+  .kpis { page-break-after: avoid; }
+
+  /* 테이블 인쇄 스타일 */
+  #printTable table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+  }
+  #printTable th {
+    background: #7c3aed !important;
+    color: white !important;
+    padding: 5px 6px;
+    text-align: left;
+    white-space: nowrap;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #printTable td {
+    padding: 4px 6px;
+    border-bottom: 0.5px solid #e5e7eb;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  #printTable tr:nth-child(even) td { background: #f9f8ff !important; }
+
+  /* BP사 카드 인쇄 */
+  #bpCards { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* 페이지 여백 */
+  @page { margin: 10mm; size: A4 landscape; }
+}
+/* ═══ PDF 인쇄 스타일 끝 ═══════════════════════════ */
