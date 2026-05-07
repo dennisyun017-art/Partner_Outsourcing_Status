@@ -1,3 +1,4 @@
+// Partner Outsourcing Status 메인 대시보드 JS
 (function () {
   const BOOT = window.APP_BOOTSTRAP || {};
   const META = BOOT.meta || {};
@@ -122,7 +123,6 @@
     return vs.length > 0 && vs[vs.length - 1] === col;
   }
 
-  // ★ sticky 스타일 - position은 CSS에서만 처리, JS는 left 값만 설정
   function applyStickyStyles(cell, col, rowType) {
     if (!isStickyCol(col)) return;
     cell.classList.add("sticky-col");
@@ -173,7 +173,6 @@
     applyFilters({ resetScrollTop: true });
   }
 
-  // ★ 핵심 수정: 헤더 셀 cssText에서 position:relative 완전 제거
   function buildHeaderRow() {
     const row = document.createElement("div");
     row.className = "table-row header-row";
@@ -182,7 +181,6 @@
       cell.className = "table-cell header-cell";
       cell.dataset.col = col;
       const w = getColumnWidth(col);
-      // ★ position 속성 없음 - CSS의 sticky-col 클래스가 position:sticky 처리
       cell.style.width = w + "px";
       cell.style.minWidth = w + "px";
       cell.style.maxWidth = w + "px";
@@ -192,14 +190,12 @@
       cell.style.overflow = "hidden";
       applyStickyStyles(cell, col, "header");
 
-      // 텍스트 라벨
       const label = document.createElement("span");
       label.textContent = col + getSortIndicator(col);
       label.style.cssText = "display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;flex:1;min-width:0;padding-right:10px;box-sizing:border-box;";
       label.onclick = () => cycleSort(col);
       cell.appendChild(label);
 
-      // ★ 리사이즈 핸들: position:absolute 인라인으로 설정 (flex 공간 차지 안 함)
       const handle = document.createElement("div");
       handle.style.position = "absolute";
       handle.style.right = "0";
@@ -223,13 +219,8 @@
     return row;
   }
 
-  // ★ 리사이즈 핸들이 position:absolute 이므로 부모 셀에 position:relative 필요
-  // → applyStickyStyles 이후 sticky-col이면 이미 position:sticky, 아니면 relative 추가
   function ensureRelativeForHandle(cell, col) {
-    if (!isStickyCol(col)) {
-      cell.style.position = "relative";
-    }
-    // sticky-col은 CSS에서 position:sticky !important 로 처리됨
+    if (!isStickyCol(col)) { cell.style.position = "relative"; }
   }
 
   document.addEventListener("mousemove", function(e) {
@@ -300,7 +291,6 @@
     const header = document.getElementById("tableHeader");
     const cur = header.querySelector(".header-row");
     const newRow = buildHeaderRow();
-    // ★ sticky 아닌 헤더 셀에 position:relative 추가 (리사이즈 핸들 absolute 기준점)
     getVisibleColumns().forEach((col, i) => {
       const cell = newRow.querySelectorAll('.table-cell')[i];
       if (cell && !isStickyCol(col)) cell.style.position = "relative";
@@ -332,7 +322,6 @@
     const header = document.getElementById("tableHeader");
     header.innerHTML = "";
     const hRow = buildHeaderRow();
-    // sticky 아닌 헤더 셀에만 position:relative (리사이즈 핸들 기준점)
     getVisibleColumns().forEach((col, i) => {
       const cell = hRow.querySelectorAll('.table-cell')[i];
       if (cell && !isStickyCol(col)) cell.style.position = "relative";
@@ -467,14 +456,12 @@
         else if (filterDateFrom){if(e&&e<filterDateFrom)return false;}
         else if (filterDateTo){if(s&&s>filterDateTo)return false;}
       }
-      // ★ 컬럼 필터: 콤마 구분 OR 부분일치
       for (const col of ALL_COLUMNS) {
         const raw = (columnFilters[col] || "").trim();
         if (!raw) continue;
         const terms = raw.split(",").map(t => normalizeText(t.trim())).filter(t => t.length > 0);
         if (terms.length === 0) continue;
         const cellVal = normalizeText(row[col] || "");
-        // OR 조건: 하나라도 포함되면 통과
         const matched = terms.some(t => cellVal.includes(t));
         if (!matched) return false;
       }
@@ -583,108 +570,71 @@
       await loadData();alert("데이터 재로딩 완료");
     });
   }
-// ═══ BP사 현황 ═══════════════════════════════════════════════
-const BP_PROCESSES = ["EFEM", "TM", "PM", "SU", "Harness", "Tuning"];
-const BP_ORDER = ["이지스", "SAM", "아셈", "SE&T", "HTC", "나우", "금송"];
 
-let bpCurrentGroup = "all";
-let bpCurrentLot = "";
-let bpDateFrom = "";
-let bpDateTo = "";
+  // ═══ BP사 현황 ═══════════════════════════════════════════════
+  const BP_PROCESSES = ["EFEM", "TM", "PM", "SU", "Harness", "Tuning"];
+  const BP_ORDER = ["이지스", "SAM", "아셈", "SE&T", "HTC", "나우", "금송"];
+  const CARD_COLORS = ["#7C3AED","#1D9E75","#D85A30","#378ADD","#BA7517","#D4537E","#6B7280"];
 
-function getWoGroup(wo) {
-  const w = String(wo || "").toUpperCase();
-  if (w.startsWith("WC")) return "PSK";
-  if (w.startsWith("HC")) return "PSKH";
-  return "other";
-}
+  let bpCurrentGroup = "all";
+  let bpCurrentLot = "";
+  let bpDateFrom = "";
+  let bpDateTo = "";
 
-function computeBpSummary(group) {
-  // partner 역할이면 자기 BP사 데이터만
-  const myPartner = (CURRENT_USER.role === "partner" && CURRENT_USER.partner)
-    ? CURRENT_USER.partner : null;
+  function getWoGroup(wo) {
+    const w = String(wo || "").toUpperCase();
+    if (w.startsWith("WC")) return "PSK";
+    if (w.startsWith("HC")) return "PSKH";
+    return "other";
+  }
 
-  const source = rawData.filter(row => {
-    // WO 그룹 필터 (PSK/PSKH)
-    if (group !== "all" && getWoGroup(row["WO"]) !== group) return false;
-    // Lot 필터
-    if (bpCurrentLot) {
-      const lot = String(row["Lot"] || "").toLowerCase();
-      if (!lot.includes(bpCurrentLot.toLowerCase())) return false;
-    }
-    // 날짜 범위 필터 (생산시작일 기준)
-    if (bpDateFrom || bpDateTo) {
-      const s = row["생산시작일"] || "";
-      const e = row["생산완료일"] || "";
-      if (bpDateFrom && bpDateTo) {
-        if (e < bpDateFrom || s > bpDateTo) return false;
-      } else if (bpDateFrom) {
-        if (e && e < bpDateFrom) return false;
-      } else if (bpDateTo) {
-        if (s && s > bpDateTo) return false;
+  // partner 역할 여부 확인 (한 곳에서 관리)
+  function getMyPartner() {
+    return (CURRENT_USER.role === "partner" && CURRENT_USER.partner)
+      ? CURRENT_USER.partner : null;
+  }
+
+  // BP사 현황 소스 데이터 필터링
+  function getBpSource(group) {
+    const myPartner = getMyPartner();
+    return rawData.filter(row => {
+      if (group !== "all" && getWoGroup(row["WO"]) !== group) return false;
+      if (bpCurrentLot) {
+        if (!String(row["Lot"] || "").toLowerCase().includes(bpCurrentLot.toLowerCase())) return false;
       }
-    }
-    return true;
-  });
-
-  const summary = {};
-  source.forEach(row => {
-    BP_PROCESSES.forEach(proc => {
-      const bp = String(row[proc] || "").trim();
-      if (!bp) return;
-      // partner 역할이면 자기 BP사 공정만 집계
-      if (myPartner && bp !== myPartner) return;
-      if (!summary[bp]) {
-        summary[bp] = {};
-        BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
+      if (bpDateFrom || bpDateTo) {
+        const s = row["생산시작일"] || "";
+        const e = row["생산완료일"] || "";
+        if (bpDateFrom && bpDateTo) { if (e < bpDateFrom || s > bpDateTo) return false; }
+        else if (bpDateFrom) { if (e && e < bpDateFrom) return false; }
+        else if (bpDateTo)   { if (s && s > bpDateTo)   return false; }
       }
-      summary[bp][proc]++;
+      return true;
     });
-  });
-  return summary;
-}
+  }
 
-  // { "SAM": { EFEM: 3, TM: 2, ... }, ... }
-  const summary = {};
-  source.forEach(row => {
-    BP_PROCESSES.forEach(proc => {
-      const bp = String(row[proc] || "").trim();
-      if (!bp) return;
-      if (!summary[bp]) {
-        summary[bp] = {};
-        BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
-      }
-      summary[bp][proc]++;
+  function computeBpSummary(group) {
+    const myPartner = getMyPartner();
+    const source = getBpSource(group);
+    const summary = {};
+    source.forEach(row => {
+      BP_PROCESSES.forEach(proc => {
+        const bp = String(row[proc] || "").trim();
+        if (!bp) return;
+        if (myPartner && bp !== myPartner) return; // partner는 자기 BP사만
+        if (!summary[bp]) {
+          summary[bp] = {};
+          BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
+        }
+        summary[bp][proc]++;
+      });
     });
-  });
-  return summary;
-}
+    return summary;
+  }
 
-function renderBpCards(summary) {
-  const container = document.getElementById("bpCards");
-  container.innerHTML = "";
-
-// KPI 업데이트 (partner 역할이면 자기 BP사만)
-  const myPartner = (CURRENT_USER.role === "partner" && CURRENT_USER.partner)
-    ? CURRENT_USER.partner : null;
-
-  const allSource = rawData.filter(row => {
-    if (bpCurrentLot) {
-      const lot = String(row["Lot"] || "").toLowerCase();
-      if (!lot.includes(bpCurrentLot.toLowerCase())) return false;
-    }
-    if (bpDateFrom || bpDateTo) {
-      const s = row["생산시작일"] || "";
-      const e = row["생산완료일"] || "";
-      if (bpDateFrom && bpDateTo) { if (e < bpDateFrom || s > bpDateTo) return false; }
-      else if (bpDateFrom) { if (e && e < bpDateFrom) return false; }
-      else if (bpDateTo) { if (s && s > bpDateTo) return false; }
-    }
-    return true;
-  });
-
-  // partner면 자기 공정 건수만 KPI에 반영
-  function countBpProcesses(rows) {
+  // BP사 현황 공정 건수 카운트 (partner 필터 적용)
+  function countProcesses(rows) {
+    const myPartner = getMyPartner();
     return rows.reduce((s, row) => {
       return s + BP_PROCESSES.filter(p => {
         const bp = String(row[p] || "").trim();
@@ -692,305 +642,283 @@ function renderBpCards(summary) {
       }).length;
     }, 0);
   }
-  const countAll  = countBpProcesses(allSource);
-  const countPsk  = countBpProcesses(allSource.filter(r => getWoGroup(r["WO"]) === "PSK"));
-  const countPskh = countBpProcesses(allSource.filter(r => getWoGroup(r["WO"]) === "PSKH"));
-  document.getElementById("bpKpiTotal").textContent = countAll;
-  document.getElementById("bpKpiPsk").textContent   = countPsk;
-  document.getElementById("bpKpiPskh").textContent  = countPskh;
 
-  // BP_ORDER 순서로 정렬, 없는 BP사는 뒤에 추가, "-" 제외
-  const allBp = Object.keys(summary).filter(bp => bp && bp !== "-");
-  const ordered = [
-    ...BP_ORDER.filter(bp => allBp.includes(bp)),
-    ...allBp.filter(bp => !BP_ORDER.includes(bp)).sort()
-  ];
-
-if (!ordered.length) {
-    container.innerHTML = "<div style='padding:16px;color:#6b7280;'>데이터가 없습니다.</div>";
-    return;
+  function getBpOrdered(summary) {
+    const allBp = Object.keys(summary).filter(bp => bp && bp !== "-");
+    return [
+      ...BP_ORDER.filter(bp => allBp.includes(bp)),
+      ...allBp.filter(bp => !BP_ORDER.includes(bp)).sort()
+    ];
   }
 
-const CARD_COLORS = [
-    "#7C3AED","#1D9E75","#D85A30","#378ADD","#BA7517","#D4537E","#6B7280"
-  ];
+  function renderBpKpis() {
+    const allSource = getBpSource("all");
+    const pskSource = allSource.filter(r => getWoGroup(r["WO"]) === "PSK");
+    const pskhSource = allSource.filter(r => getWoGroup(r["WO"]) === "PSKH");
+    document.getElementById("bpKpiTotal").textContent = countProcesses(allSource);
+    document.getElementById("bpKpiPsk").textContent   = countProcesses(pskSource);
+    document.getElementById("bpKpiPskh").textContent  = countProcesses(pskhSource);
+  }
 
-  ordered.forEach((bp, idx) => {
-    const data = summary[bp];
-    const total = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
-    const maxVal = Math.max(...BP_PROCESSES.map(p => data[p]), 1);
-    const color = CARD_COLORS[idx % CARD_COLORS.length];
+  function renderBpCards(summary) {
+    const container = document.getElementById("bpCards");
+    container.innerHTML = "";
+    const ordered = getBpOrdered(summary);
+    if (!ordered.length) {
+      container.innerHTML = "<div style='padding:16px;color:#6b7280;'>데이터가 없습니다.</div>";
+      return;
+    }
+    ordered.forEach((bp, idx) => {
+      const data = summary[bp];
+      const total = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
+      const maxVal = Math.max(...BP_PROCESSES.map(p => data[p]), 1);
+      const color = CARD_COLORS[idx % CARD_COLORS.length];
 
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.cssText = "padding:0;overflow:hidden;";
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.cssText = "padding:0;overflow:hidden;";
 
-    // 카드 헤더
-    const header = document.createElement("div");
-    header.style.cssText = `background:${color}18;border-bottom:2px solid ${color};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;`;
-    header.innerHTML = `
-      <span style="font-size:14px;font-weight:600;color:${color};">${bp}</span>
-      <span style="font-size:18px;font-weight:700;color:${color};">${total}</span>
-    `;
-    card.appendChild(header);
-
-    // 공정별 리스트
-    const body = document.createElement("div");
-    body.style.cssText = "padding:10px 14px;";
-    BP_PROCESSES.forEach(proc => {
-      const cnt = data[proc];
-      const pct = Math.round((cnt / maxVal) * 100);
-      const row = document.createElement("div");
-      row.style.cssText = "display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:0.5px solid #f0f0f0;";
-      row.innerHTML = `
-        <span style="font-size:12px;color:#6b7280;min-width:52px;">${proc}</span>
-        <div style="flex:1;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
-          <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
-        </div>
-        <span style="font-size:12px;font-weight:600;min-width:20px;text-align:right;">${cnt}</span>
+      const header = document.createElement("div");
+      header.style.cssText = `background:${color}18;border-bottom:2px solid ${color};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;`;
+      header.innerHTML = `
+        <span style="font-size:14px;font-weight:600;color:${color};">${bp}</span>
+        <span style="font-size:18px;font-weight:700;color:${color};">${total}</span>
       `;
-      body.appendChild(row);
-    });
-    card.appendChild(body);
-    container.appendChild(card);
-  });
-}
+      card.appendChild(header);
 
-function renderBpMatrix(summary) {
-  const table = document.getElementById("bpMatrix");
-  table.innerHTML = "";
-  const allBp = Object.keys(summary).filter(bp => bp && bp !== "-");
-  const ordered = [
-    ...BP_ORDER.filter(bp => allBp.includes(bp)),
-    ...allBp.filter(bp => !BP_ORDER.includes(bp)).sort()
-  ];
-  const bpList = ordered;
-
-  // 헤더 행
-  const thead = document.createElement("thead");
-  const hRow = document.createElement("tr");
-  ["BP사", ...BP_PROCESSES, "합계"].forEach((h, i) => {
-    const th = document.createElement("th");
-    th.textContent = h;
-    th.style.cssText = `padding:8px 12px;text-align:${i===0?"left":"center"};background:#7c3aed;color:white;font-size:13px;white-space:nowrap;`;
-    hRow.appendChild(th);
-  });
-  thead.appendChild(hRow);
-  table.appendChild(thead);
-
-  // 데이터 행
-  const tbody = document.createElement("tbody");
-  // 합계 행 계산용
-  const colTotals = {};
-  BP_PROCESSES.forEach(p => { colTotals[p] = 0; });
-
-  ordered.forEach((bp, idx) => {
-    const data = summary[bp];
-    const rowTotal = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
-    const tr = document.createElement("tr");
-    tr.style.background = idx % 2 === 0 ? "#fff" : "#f9f8ff";
-
-    // BP사명
-    const tdName = document.createElement("td");
-    tdName.textContent = bp;
-    tdName.style.cssText = "padding:8px 12px;font-weight:600;font-size:13px;border-bottom:0.5px solid #e5e7eb;";
-    tr.appendChild(tdName);
-
-    BP_PROCESSES.forEach(proc => {
-      const cnt = data[proc];
-      colTotals[proc] += cnt;
-      const td = document.createElement("td");
-      td.textContent = cnt > 0 ? cnt : "-";
-      td.style.cssText = `padding:8px 12px;text-align:center;font-size:13px;border-bottom:0.5px solid #e5e7eb;${cnt > 0 ? "color:#7c3aed;font-weight:600;" : "color:#d1d5db;"}`;
-      tr.appendChild(td);
-    });
-
-    // 행 합계
-    const tdTotal = document.createElement("td");
-    tdTotal.textContent = rowTotal;
-    tdTotal.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-bottom:0.5px solid #e5e7eb;background:#f3f0ff;color:#7c3aed;";
-    tr.appendChild(tdTotal);
-    tbody.appendChild(tr);
-  });
-
-  // 합계 행
-  if (bpList.length > 0) {
-    const trSum = document.createElement("tr");
-    trSum.style.background = "#ede9fe";
-    const tdLabel = document.createElement("td");
-    tdLabel.textContent = "합계";
-    tdLabel.style.cssText = "padding:8px 12px;font-weight:700;font-size:13px;border-top:2px solid #7c3aed;";
-    trSum.appendChild(tdLabel);
-    let grandTotal = 0;
-    BP_PROCESSES.forEach(proc => {
-      const td = document.createElement("td");
-      td.textContent = colTotals[proc];
-      td.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-top:2px solid #7c3aed;";
-      grandTotal += colTotals[proc];
-      trSum.appendChild(td);
-    });
-    const tdGrand = document.createElement("td");
-    tdGrand.textContent = grandTotal;
-    tdGrand.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-top:2px solid #7c3aed;background:#ddd6fe;color:#5b21b6;";
-    trSum.appendChild(tdGrand);
-    tbody.appendChild(trSum);
-  }
-
-  table.appendChild(tbody);
-}
-
-function refreshBpView() {
-  const summary = computeBpSummary(bpCurrentGroup);
-  renderBpCards(summary);
-  renderBpMatrix(summary);
-}
-
-// 뷰 전환
-function showBpView() {
-  document.getElementById("bpView").style.display = "block";
-  // 메인 카드들 숨기기
-  document.querySelectorAll(".app-shell > .card, .kpis").forEach(el => {
-    el.style.display = "none";
-  });
-  refreshBpView();
-}
-
-function showMainView() {
-  document.getElementById("bpView").style.display = "none";
-  document.querySelectorAll(".app-shell > .card, .kpis").forEach(el => {
-    el.style.display = "";
-  });
-}
-
-// 이벤트 연결 (DOM 로드 후 실행)
-(function initBpEvents() {
-  const bpViewBtn = document.getElementById("bpViewBtn");
-  if (bpViewBtn) bpViewBtn.addEventListener("click", showBpView);
-
-  const bpBackBtn = document.getElementById("bpBackBtn");
-  if (bpBackBtn) bpBackBtn.addEventListener("click", showMainView);
-
-  const filterBtns = document.querySelectorAll(".bp-filter-btn");
-  filterBtns.forEach(btn => {
-    btn.addEventListener("click", function () {
-      filterBtns.forEach(b => b.classList.remove("active"));
-      this.classList.add("active");
-      bpCurrentGroup = this.dataset.group;
-      refreshBpView();
-    });
-  });
-
-const lotInput = document.getElementById("bpLotFilter");
-  if (lotInput) {
-    lotInput.addEventListener("input", function () {
-      bpCurrentLot = this.value.trim();
-      refreshBpView();
+      const body = document.createElement("div");
+      body.style.cssText = "padding:10px 14px;";
+      BP_PROCESSES.forEach(proc => {
+        const cnt = data[proc];
+        const pct = Math.round((cnt / maxVal) * 100);
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:0.5px solid #f0f0f0;";
+        row.innerHTML = `
+          <span style="font-size:12px;color:#6b7280;min-width:52px;">${proc}</span>
+          <div style="flex:1;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
+          </div>
+          <span style="font-size:12px;font-weight:600;min-width:20px;text-align:right;">${cnt}</span>
+        `;
+        body.appendChild(row);
+      });
+      card.appendChild(body);
+      container.appendChild(card);
     });
   }
 
-  const dateFrom = document.getElementById("bpDateFrom");
-  if (dateFrom) {
-    dateFrom.addEventListener("change", function () {
-      bpDateFrom = this.value;
-      refreshBpView();
+  function renderBpMatrix(summary) {
+    const table = document.getElementById("bpMatrix");
+    table.innerHTML = "";
+    const ordered = getBpOrdered(summary);
+
+    const thead = document.createElement("thead");
+    const hRow = document.createElement("tr");
+    ["BP사", ...BP_PROCESSES, "합계"].forEach((h, i) => {
+      const th = document.createElement("th");
+      th.textContent = h;
+      th.style.cssText = `padding:8px 12px;text-align:${i===0?"left":"center"};background:#7c3aed;color:white;font-size:13px;white-space:nowrap;`;
+      hRow.appendChild(th);
+    });
+    thead.appendChild(hRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    const colTotals = {};
+    BP_PROCESSES.forEach(p => { colTotals[p] = 0; });
+
+    ordered.forEach((bp, idx) => {
+      const data = summary[bp];
+      const rowTotal = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
+      const tr = document.createElement("tr");
+      tr.style.background = idx % 2 === 0 ? "#fff" : "#f9f8ff";
+
+      const tdName = document.createElement("td");
+      tdName.textContent = bp;
+      tdName.style.cssText = "padding:8px 12px;font-weight:600;font-size:13px;border-bottom:0.5px solid #e5e7eb;";
+      tr.appendChild(tdName);
+
+      BP_PROCESSES.forEach(proc => {
+        const cnt = data[proc];
+        colTotals[proc] += cnt;
+        const td = document.createElement("td");
+        td.textContent = cnt > 0 ? cnt : "-";
+        td.style.cssText = `padding:8px 12px;text-align:center;font-size:13px;border-bottom:0.5px solid #e5e7eb;${cnt > 0 ? "color:#7c3aed;font-weight:600;" : "color:#d1d5db;"}`;
+        tr.appendChild(td);
+      });
+
+      const tdTotal = document.createElement("td");
+      tdTotal.textContent = rowTotal;
+      tdTotal.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-bottom:0.5px solid #e5e7eb;background:#f3f0ff;color:#7c3aed;";
+      tr.appendChild(tdTotal);
+      tbody.appendChild(tr);
+    });
+
+    if (ordered.length > 0) {
+      const trSum = document.createElement("tr");
+      trSum.style.background = "#ede9fe";
+      const tdLabel = document.createElement("td");
+      tdLabel.textContent = "합계";
+      tdLabel.style.cssText = "padding:8px 12px;font-weight:700;font-size:13px;border-top:2px solid #7c3aed;";
+      trSum.appendChild(tdLabel);
+      let grandTotal = 0;
+      BP_PROCESSES.forEach(proc => {
+        const td = document.createElement("td");
+        td.textContent = colTotals[proc];
+        td.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-top:2px solid #7c3aed;";
+        grandTotal += colTotals[proc];
+        trSum.appendChild(td);
+      });
+      const tdGrand = document.createElement("td");
+      tdGrand.textContent = grandTotal;
+      tdGrand.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-top:2px solid #7c3aed;background:#ddd6fe;color:#5b21b6;";
+      trSum.appendChild(tdGrand);
+      tbody.appendChild(trSum);
+    }
+    table.appendChild(tbody);
+  }
+
+  function refreshBpView() {
+    const summary = computeBpSummary(bpCurrentGroup);
+    renderBpKpis();
+    renderBpCards(summary);
+    renderBpMatrix(summary);
+  }
+
+  function showBpView() {
+    document.getElementById("bpView").style.display = "block";
+    document.querySelectorAll(".app-shell > .card, .kpis").forEach(el => {
+      el.style.display = "none";
+    });
+    refreshBpView();
+  }
+
+  function showMainView() {
+    document.getElementById("bpView").style.display = "none";
+    document.querySelectorAll(".app-shell > .card, .kpis").forEach(el => {
+      el.style.display = "";
     });
   }
 
-  const dateTo = document.getElementById("bpDateTo");
-  if (dateTo) {
-    dateTo.addEventListener("change", function () {
-      bpDateTo = this.value;
-      refreshBpView();
+  (function initBpEvents() {
+    const bpViewBtn = document.getElementById("bpViewBtn");
+    if (bpViewBtn) bpViewBtn.addEventListener("click", showBpView);
+
+    const bpBackBtn = document.getElementById("bpBackBtn");
+    if (bpBackBtn) bpBackBtn.addEventListener("click", showMainView);
+
+    const filterBtns = document.querySelectorAll(".bp-filter-btn");
+    filterBtns.forEach(btn => {
+      btn.addEventListener("click", function () {
+        filterBtns.forEach(b => b.classList.remove("active"));
+        this.classList.add("active");
+        bpCurrentGroup = this.dataset.group;
+        refreshBpView();
+      });
     });
-  }
 
-  const dateReset = document.getElementById("bpDateReset");
-  if (dateReset) {
-    dateReset.addEventListener("click", function () {
-      bpDateFrom = ""; bpDateTo = "";
-      if (dateFrom) dateFrom.value = "";
-      if (dateTo) dateTo.value = "";
-      refreshBpView();
-    });
-  }
-})();
-// ═══ PDF 인쇄 ═══════════════════════════════════════════════
+    const lotInput = document.getElementById("bpLotFilter");
+    if (lotInput) {
+      lotInput.addEventListener("input", function () {
+        bpCurrentLot = this.value.trim();
+        refreshBpView();
+      });
+    }
 
-// 메인 대시보드 인쇄용 전체 테이블 생성
-function buildPrintTable() {
-  const container = document.getElementById("printTable");
-  container.innerHTML = "";
+    const dateFrom = document.getElementById("bpDateFrom");
+    if (dateFrom) {
+      dateFrom.addEventListener("change", function () {
+        bpDateFrom = this.value;
+        refreshBpView();
+      });
+    }
 
-  // 제목 헤더
-  const title = document.createElement("div");
-  title.style.cssText = "margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #7c3aed;";
-  title.innerHTML = `
-    <div style="font-size:16px;font-weight:700;color:#7c3aed;">Partner Outsourcing Status</div>
-    <div style="font-size:11px;color:#6b7280;margin-top:4px;">
-      기준일: ${TODAY_STR} &nbsp;|&nbsp; 총 ${filteredData.length}건
-      &nbsp;|&nbsp; 조립중: ${filteredData.filter(r=>r["상태"]==="조립중").length}건
-      &nbsp;|&nbsp; Tuning중: ${filteredData.filter(r=>r["상태"]==="Tuning중").length}건
-      &nbsp;|&nbsp; 출력일시: ${new Date().toLocaleString("ko-KR")}
-    </div>
-  `;
-  container.appendChild(title);
+    const dateTo = document.getElementById("bpDateTo");
+    if (dateTo) {
+      dateTo.addEventListener("change", function () {
+        bpDateTo = this.value;
+        refreshBpView();
+      });
+    }
 
-  // 출력할 컬럼 (Remark 제외, 가로 공간 절약)
-  const printCols = getVisibleColumns().filter(c => c !== "Remark");
+    const dateReset = document.getElementById("bpDateReset");
+    if (dateReset) {
+      dateReset.addEventListener("click", function () {
+        bpDateFrom = ""; bpDateTo = "";
+        if (dateFrom) dateFrom.value = "";
+        if (dateTo) dateTo.value = "";
+        refreshBpView();
+      });
+    }
+  })();
+  // ═══ BP사 현황 끝 ═══════════════════════════════════════════
 
-  const table = document.createElement("table");
-  // 헤더
-  const thead = document.createElement("thead");
-  const hRow = document.createElement("tr");
-  printCols.forEach(col => {
-    const th = document.createElement("th");
-    th.textContent = col;
-    hRow.appendChild(th);
-  });
-  thead.appendChild(hRow);
-  table.appendChild(thead);
+  // ═══ PDF 인쇄 ═══════════════════════════════════════════════
+  function buildPrintTable() {
+    const container = document.getElementById("printTable");
+    container.innerHTML = "";
 
-  // 데이터 전체
-  const tbody = document.createElement("tbody");
-  filteredData.forEach((rowData, idx) => {
-    const tr = document.createElement("tr");
+    const title = document.createElement("div");
+    title.style.cssText = "margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #7c3aed;";
+    title.innerHTML = `
+      <div style="font-size:16px;font-weight:700;color:#7c3aed;">Partner Outsourcing Status</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:4px;">
+        기준일: ${TODAY_STR} &nbsp;|&nbsp; 총 ${filteredData.length}건
+        &nbsp;|&nbsp; 조립중: ${filteredData.filter(r=>r["상태"]==="조립중").length}건
+        &nbsp;|&nbsp; Tuning중: ${filteredData.filter(r=>r["상태"]==="Tuning중").length}건
+        &nbsp;|&nbsp; 출력일시: ${new Date().toLocaleString("ko-KR")}
+      </div>
+    `;
+    container.appendChild(title);
+
+    const printCols = getVisibleColumns().filter(c => c !== "Remark");
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const hRow = document.createElement("tr");
     printCols.forEach(col => {
-      const td = document.createElement("td");
-      td.textContent = rowData[col] || "";
-      tr.appendChild(td);
+      const th = document.createElement("th");
+      th.textContent = col;
+      hRow.appendChild(th);
     });
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  container.appendChild(table);
-}
+    thead.appendChild(hRow);
+    table.appendChild(thead);
 
-function printMainDashboard() {
-  buildPrintTable();
-  document.getElementById("printTable").style.display = "block";
-  // 메인 테이블 영역 숨기기
-  const tableCard = document.querySelector(".card:has(#tableScroll)");
-  if (tableCard) tableCard.style.display = "none";
-  window.print();
-  // 복원
-  document.getElementById("printTable").style.display = "none";
-  if (tableCard) tableCard.style.display = "";
-}
+    const tbody = document.createElement("tbody");
+    filteredData.forEach(rowData => {
+      const tr = document.createElement("tr");
+      printCols.forEach(col => {
+        const td = document.createElement("td");
+        td.textContent = rowData[col] || "";
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    container.appendChild(table);
+  }
 
-function printBpDashboard() {
-  window.print();
-}
+  function printMainDashboard() {
+    buildPrintTable();
+    document.getElementById("printTable").style.display = "block";
+    const tableCard = document.querySelector(".card:has(#tableScroll)");
+    if (tableCard) tableCard.style.display = "none";
+    window.print();
+    document.getElementById("printTable").style.display = "none";
+    if (tableCard) tableCard.style.display = "";
+  }
 
-// PDF 버튼 이벤트
-(function initPrintEvents() {
-  const mainPdfBtn = document.getElementById("mainPdfBtn");
-  if (mainPdfBtn) mainPdfBtn.addEventListener("click", printMainDashboard);
+  function printBpDashboard() {
+    window.print();
+  }
 
-  const bpPdfBtn = document.getElementById("bpPdfBtn");
-  if (bpPdfBtn) bpPdfBtn.addEventListener("click", printBpDashboard);
-})();
+  (function initPrintEvents() {
+    const mainPdfBtn = document.getElementById("mainPdfBtn");
+    if (mainPdfBtn) mainPdfBtn.addEventListener("click", printMainDashboard);
 
-// ═══ PDF 인쇄 끝 ═══════════════════════════════════════════
-// ═══ BP사 현황 끝 ═══════════════════════════════════════════
+    const bpPdfBtn = document.getElementById("bpPdfBtn");
+    if (bpPdfBtn) bpPdfBtn.addEventListener("click", printBpDashboard);
+  })();
+  // ═══ PDF 인쇄 끝 ═══════════════════════════════════════════
+
   loadData();
 })();
