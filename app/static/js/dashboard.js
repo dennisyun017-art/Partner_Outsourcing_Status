@@ -189,13 +189,11 @@
       cell.style.boxSizing = "border-box";
       cell.style.overflow = "hidden";
       applyStickyStyles(cell, col, "header");
-
       const label = document.createElement("span");
       label.textContent = col + getSortIndicator(col);
       label.style.cssText = "display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;flex:1;min-width:0;padding-right:10px;box-sizing:border-box;";
       label.onclick = () => cycleSort(col);
       cell.appendChild(label);
-
       const handle = document.createElement("div");
       handle.style.position = "absolute";
       handle.style.right = "0";
@@ -217,10 +215,6 @@
       row.appendChild(cell);
     });
     return row;
-  }
-
-  function ensureRelativeForHandle(cell, col) {
-    if (!isStickyCol(col)) { cell.style.position = "relative"; }
   }
 
   document.addEventListener("mousemove", function(e) {
@@ -265,7 +259,6 @@
       cell.style.flexGrow = "0";
       cell.style.boxSizing = "border-box";
       applyStickyStyles(cell, col, "filter");
-
       const inp = document.createElement("input");
       inp.className = "filter-input";
       inp.placeholder = "필터 (콤마로 OR)";
@@ -432,7 +425,6 @@
     const filterDate    = document.getElementById("filterDate").value;
     const filterDateFrom= document.getElementById("filterDateFrom").value;
     const filterDateTo  = document.getElementById("filterDateTo").value;
-
     const data = rawData.filter(row => {
       if (searchText) {
         const full = normalizeText(ALL_COLUMNS.map(c=>row[c]||"").join(" "));
@@ -462,12 +454,10 @@
         const terms = raw.split(",").map(t => normalizeText(t.trim())).filter(t => t.length > 0);
         if (terms.length === 0) continue;
         const cellVal = normalizeText(row[col] || "");
-        const matched = terms.some(t => cellVal.includes(t));
-        if (!matched) return false;
+        if (!terms.some(t => cellVal.includes(t))) return false;
       }
       return true;
     });
-
     filteredData = sortData(data);
     rebuildStickyLeftMap();
     syncTableInnerWidth();
@@ -575,6 +565,7 @@
   const BP_PROCESSES = ["EFEM", "TM", "PM", "SU", "Harness", "Tuning"];
   const BP_ORDER = ["이지스", "SAM", "아셈", "SE&T", "HTC", "나우", "금송"];
   const CARD_COLORS = ["#7C3AED","#1D9E75","#D85A30","#378ADD","#BA7517","#D4537E","#6B7280"];
+  const TUNING_COLOR = "#D97706";
 
   let bpCurrentGroup = "all";
   let bpCurrentLot = "";
@@ -588,15 +579,12 @@
     return "other";
   }
 
-  // partner 역할 여부 확인 (한 곳에서 관리)
   function getMyPartner() {
     return (CURRENT_USER.role === "partner" && CURRENT_USER.partner)
       ? CURRENT_USER.partner : null;
   }
 
-  // BP사 현황 소스 데이터 필터링
   function getBpSource(group) {
-    const myPartner = getMyPartner();
     return rawData.filter(row => {
       if (group !== "all" && getWoGroup(row["WO"]) !== group) return false;
       if (bpCurrentLot) {
@@ -621,7 +609,7 @@
       BP_PROCESSES.forEach(proc => {
         const bp = String(row[proc] || "").trim();
         if (!bp) return;
-        if (myPartner && bp !== myPartner) return; // partner는 자기 BP사만
+        if (myPartner && bp !== myPartner) return;
         if (!summary[bp]) {
           summary[bp] = {};
           BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
@@ -632,7 +620,6 @@
     return summary;
   }
 
-  // BP사 현황 공정 건수 카운트 (partner 필터 적용)
   function countProcesses(rows) {
     const myPartner = getMyPartner();
     return rows.reduce((s, row) => {
@@ -678,30 +665,57 @@
       card.className = "card";
       card.style.cssText = "padding:0;overflow:hidden;";
 
+      // 카드 헤더
       const header = document.createElement("div");
       header.style.cssText = `background:${color}18;border-bottom:2px solid ${color};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;`;
       header.innerHTML = `
-        <span style="font-size:14px;font-weight:600;color:${color};">${bp}</span>
-        <span style="font-size:18px;font-weight:700;color:${color};">${total}</span>
+        <span style="font-size:13px;font-weight:500;color:${color};">${bp}</span>
+        <span style="font-size:20px;font-weight:500;color:${color};">${total}</span>
       `;
       card.appendChild(header);
 
+      // 세로 바 차트 영역
       const body = document.createElement("div");
-      body.style.cssText = "padding:10px 14px;";
+      body.style.cssText = "padding:12px 14px 10px;";
+
+      const barGroup = document.createElement("div");
+      barGroup.style.cssText = "display:flex;gap:6px;align-items:flex-end;height:80px;justify-content:space-around;margin-bottom:6px;";
+
       BP_PROCESSES.forEach(proc => {
         const cnt = data[proc];
         const pct = Math.round((cnt / maxVal) * 100);
-        const row = document.createElement("div");
-        row.style.cssText = "display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:0.5px solid #f0f0f0;";
-        row.innerHTML = `
-          <span style="font-size:12px;color:#6b7280;min-width:52px;">${proc}</span>
-          <div style="flex:1;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
-            <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
-          </div>
-          <span style="font-size:12px;font-weight:600;min-width:20px;text-align:right;">${cnt}</span>
-        `;
-        body.appendChild(row);
+        const barColor = proc === "Tuning" ? TUNING_COLOR : color;
+
+        const col = document.createElement("div");
+        col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;";
+
+        const valEl = document.createElement("span");
+        valEl.style.cssText = "font-size:11px;font-weight:500;color:var(--color-text-primary);line-height:1;";
+        valEl.textContent = cnt;
+
+        const barWrap = document.createElement("div");
+        barWrap.style.cssText = "width:100%;display:flex;align-items:flex-end;height:60px;";
+
+        const bar = document.createElement("div");
+        bar.style.cssText = `width:100%;height:${Math.max(pct, cnt > 0 ? 2 : 0)}%;background:${barColor};border-radius:3px 3px 0 0;`;
+        barWrap.appendChild(bar);
+
+        const labelEl = document.createElement("span");
+        labelEl.style.cssText = "font-size:10px;color:var(--color-text-secondary);white-space:nowrap;";
+        labelEl.textContent = proc === "Harness" ? "Hrn" : proc === "Tuning" ? "Tng" : proc;
+
+        col.appendChild(valEl);
+        col.appendChild(barWrap);
+        col.appendChild(labelEl);
+        barGroup.appendChild(col);
       });
+
+      body.appendChild(barGroup);
+
+      const baseline = document.createElement("div");
+      baseline.style.cssText = "border-top:0.5px solid var(--color-border-tertiary);margin:0 -14px;";
+      body.appendChild(baseline);
+
       card.appendChild(body);
       container.appendChild(card);
     });
@@ -729,75 +743,23 @@
 
     ordered.forEach((bp, idx) => {
       const data = summary[bp];
-      const total = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
-      const maxVal = Math.max(...BP_PROCESSES.map(p => data[p]), 1);
-      const color = CARD_COLORS[idx % CARD_COLORS.length];
-      // Tuning은 amber 색상으로 구분
-      const tuningColor = "#D97706";
+      const rowTotal = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
+      const tr = document.createElement("tr");
+      tr.style.background = idx % 2 === 0 ? "#fff" : "#f9f8ff";
 
-      const card = document.createElement("div");
-      card.className = "card";
-      card.style.cssText = "padding:0;overflow:hidden;";
-
-      // 카드 헤더
-      const header = document.createElement("div");
-      header.style.cssText = `background:${color}18;border-bottom:2px solid ${color};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;`;
-      header.innerHTML = `
-        <span style="font-size:13px;font-weight:500;color:${color};">${bp}</span>
-        <span style="font-size:20px;font-weight:500;color:${color};">${total}</span>
-      `;
-      card.appendChild(header);
-
-      // 세로 바 차트 영역
-      const body = document.createElement("div");
-      body.style.cssText = "padding:12px 14px 10px;";
-
-      const barGroup = document.createElement("div");
-      barGroup.style.cssText = "display:flex;gap:6px;align-items:flex-end;height:80px;justify-content:space-around;margin-bottom:6px;";
+      const tdName = document.createElement("td");
+      tdName.textContent = bp;
+      tdName.style.cssText = "padding:8px 12px;font-weight:600;font-size:13px;border-bottom:0.5px solid #e5e7eb;";
+      tr.appendChild(tdName);
 
       BP_PROCESSES.forEach(proc => {
         const cnt = data[proc];
-        const pct = Math.round((cnt / maxVal) * 100);
-        const barColor = proc === "Tuning" ? tuningColor : color;
-
-        const col = document.createElement("div");
-        col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;";
-
-        // 수치
-        const valEl = document.createElement("span");
-        valEl.style.cssText = "font-size:11px;font-weight:500;color:var(--color-text-primary);line-height:1;";
-        valEl.textContent = cnt;
-
-        // 바 래퍼 (높이 고정 60px)
-        const barWrap = document.createElement("div");
-        barWrap.style.cssText = "width:100%;display:flex;align-items:flex-end;height:60px;";
-
-        const bar = document.createElement("div");
-        bar.style.cssText = `width:100%;height:${Math.max(pct, cnt > 0 ? 2 : 0)}%;background:${barColor};border-radius:3px 3px 0 0;`;
-
-        barWrap.appendChild(bar);
-
-        // 공정 라벨
-        const labelEl = document.createElement("span");
-        labelEl.style.cssText = "font-size:10px;color:var(--color-text-secondary);white-space:nowrap;";
-        labelEl.textContent = proc === "Harness" ? "Hrn" : proc === "Tuning" ? "Tng" : proc;
-
-        col.appendChild(valEl);
-        col.appendChild(barWrap);
-        col.appendChild(labelEl);
-        barGroup.appendChild(col);
+        colTotals[proc] += cnt;
+        const td = document.createElement("td");
+        td.textContent = cnt > 0 ? cnt : "-";
+        td.style.cssText = `padding:8px 12px;text-align:center;font-size:13px;border-bottom:0.5px solid #e5e7eb;${cnt > 0 ? "color:#7c3aed;font-weight:600;" : "color:#d1d5db;"}`;
+        tr.appendChild(td);
       });
-
-      body.appendChild(barGroup);
-
-      // 베이스라인
-      const baseline = document.createElement("div");
-      baseline.style.cssText = "border-top:0.5px solid var(--color-border-tertiary);margin:0 -14px;";
-      body.appendChild(baseline);
-
-      card.appendChild(body);
-      container.appendChild(card);
-    });
 
       const tdTotal = document.createElement("td");
       tdTotal.textContent = rowTotal;
@@ -909,7 +871,6 @@
   function buildPrintTable() {
     const container = document.getElementById("printTable");
     container.innerHTML = "";
-
     const title = document.createElement("div");
     title.style.cssText = "margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #7c3aed;";
     title.innerHTML = `
@@ -922,7 +883,6 @@
       </div>
     `;
     container.appendChild(title);
-
     const printCols = getVisibleColumns().filter(c => c !== "Remark");
     const table = document.createElement("table");
     const thead = document.createElement("thead");
@@ -934,7 +894,6 @@
     });
     thead.appendChild(hRow);
     table.appendChild(thead);
-
     const tbody = document.createElement("tbody");
     filteredData.forEach(rowData => {
       const tr = document.createElement("tr");
@@ -966,7 +925,6 @@
   (function initPrintEvents() {
     const mainPdfBtn = document.getElementById("mainPdfBtn");
     if (mainPdfBtn) mainPdfBtn.addEventListener("click", printMainDashboard);
-
     const bpPdfBtn = document.getElementById("bpPdfBtn");
     if (bpPdfBtn) bpPdfBtn.addEventListener("click", printBpDashboard);
   })();
