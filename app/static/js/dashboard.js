@@ -619,12 +619,12 @@
 
     source.forEach(row => {
       if (myPartner) {
-        // partner 계정: 내가 조립 공정(EFEM~Harness)에 포함된 LOT만
-        const assemblyProcs = BP_PROCESSES.filter(p => p !== "Tuning");
-        const isMyLot = assemblyProcs.some(p => String(row[p] || "").trim() === myPartner);
+        // partner 계정: 전체 공정(Tuning 포함) 중 내가 하나라도 포함된 LOT
+        const isMyLot = BP_PROCESSES.some(p => String(row[p] || "").trim() === myPartner);
         if (!isMyLot) return;
 
         // 내 조립 공정 집계 → 내 카드
+        const assemblyProcs = BP_PROCESSES.filter(p => p !== "Tuning");
         assemblyProcs.forEach(proc => {
           const bp = String(row[proc] || "").trim();
           if (bp !== myPartner) return;
