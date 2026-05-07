@@ -583,6 +583,217 @@
       await loadData();alert("데이터 재로딩 완료");
     });
   }
+// ═══ BP사 현황 ═══════════════════════════════════════════════
+const BP_PROCESSES = ["EFEM", "TM", "PM", "SU", "Harness", "Tuning"];
 
+let bpCurrentGroup = "all"; // 현재 선택된 그룹 필터
+
+function getWoGroup(wo) {
+  const w = String(wo || "").toUpperCase();
+  if (w.startsWith("WC")) return "PSK";
+  if (w.startsWith("HC")) return "PSKH";
+  return "other";
+}
+
+function computeBpSummary(group) {
+  // group: "all" | "PSK" | "PSKH"
+  const source = rawData.filter(row => {
+    if (group === "all") return true;
+    return getWoGroup(row["WO"]) === group;
+  });
+
+  // { "SAM": { EFEM: 3, TM: 2, ... }, ... }
+  const summary = {};
+  source.forEach(row => {
+    BP_PROCESSES.forEach(proc => {
+      const bp = String(row[proc] || "").trim();
+      if (!bp) return;
+      if (!summary[bp]) {
+        summary[bp] = {};
+        BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
+      }
+      summary[bp][proc]++;
+    });
+  });
+  return summary;
+}
+
+function renderBpCards(summary) {
+  const container = document.getElementById("bpCards");
+  container.innerHTML = "";
+  const bpList = Object.keys(summary).sort();
+  if (!bpList.length) {
+    container.innerHTML = "<div style='padding:16px;color:#6b7280;'>데이터가 없습니다.</div>";
+    return;
+  }
+
+  const CARD_COLORS = [
+    "#7C3AED","#1D9E75","#D85A30","#378ADD","#BA7517","#D4537E","#6B7280"
+  ];
+
+  bpList.forEach((bp, idx) => {
+    const data = summary[bp];
+    const total = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
+    const maxVal = Math.max(...BP_PROCESSES.map(p => data[p]), 1);
+    const color = CARD_COLORS[idx % CARD_COLORS.length];
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.cssText = "padding:0;overflow:hidden;";
+
+    // 카드 헤더
+    const header = document.createElement("div");
+    header.style.cssText = `background:${color}18;border-bottom:2px solid ${color};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;`;
+    header.innerHTML = `
+      <span style="font-size:14px;font-weight:600;color:${color};">${bp}</span>
+      <span style="font-size:18px;font-weight:700;color:${color};">${total}</span>
+    `;
+    card.appendChild(header);
+
+    // 공정별 리스트
+    const body = document.createElement("div");
+    body.style.cssText = "padding:10px 14px;";
+    BP_PROCESSES.forEach(proc => {
+      const cnt = data[proc];
+      const pct = Math.round((cnt / maxVal) * 100);
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:0.5px solid #f0f0f0;";
+      row.innerHTML = `
+        <span style="font-size:12px;color:#6b7280;min-width:52px;">${proc}</span>
+        <div style="flex:1;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
+        </div>
+        <span style="font-size:12px;font-weight:600;min-width:20px;text-align:right;">${cnt}</span>
+      `;
+      body.appendChild(row);
+    });
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+}
+
+function renderBpMatrix(summary) {
+  const table = document.getElementById("bpMatrix");
+  table.innerHTML = "";
+  const bpList = Object.keys(summary).sort();
+
+  // 헤더 행
+  const thead = document.createElement("thead");
+  const hRow = document.createElement("tr");
+  ["BP사", ...BP_PROCESSES, "합계"].forEach((h, i) => {
+    const th = document.createElement("th");
+    th.textContent = h;
+    th.style.cssText = `padding:8px 12px;text-align:${i===0?"left":"center"};background:#7c3aed;color:white;font-size:13px;white-space:nowrap;`;
+    hRow.appendChild(th);
+  });
+  thead.appendChild(hRow);
+  table.appendChild(thead);
+
+  // 데이터 행
+  const tbody = document.createElement("tbody");
+  // 합계 행 계산용
+  const colTotals = {};
+  BP_PROCESSES.forEach(p => { colTotals[p] = 0; });
+
+  bpList.forEach((bp, idx) => {
+    const data = summary[bp];
+    const rowTotal = BP_PROCESSES.reduce((s, p) => s + data[p], 0);
+    const tr = document.createElement("tr");
+    tr.style.background = idx % 2 === 0 ? "#fff" : "#f9f8ff";
+
+    // BP사명
+    const tdName = document.createElement("td");
+    tdName.textContent = bp;
+    tdName.style.cssText = "padding:8px 12px;font-weight:600;font-size:13px;border-bottom:0.5px solid #e5e7eb;";
+    tr.appendChild(tdName);
+
+    BP_PROCESSES.forEach(proc => {
+      const cnt = data[proc];
+      colTotals[proc] += cnt;
+      const td = document.createElement("td");
+      td.textContent = cnt > 0 ? cnt : "-";
+      td.style.cssText = `padding:8px 12px;text-align:center;font-size:13px;border-bottom:0.5px solid #e5e7eb;${cnt > 0 ? "color:#7c3aed;font-weight:600;" : "color:#d1d5db;"}`;
+      tr.appendChild(td);
+    });
+
+    // 행 합계
+    const tdTotal = document.createElement("td");
+    tdTotal.textContent = rowTotal;
+    tdTotal.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-bottom:0.5px solid #e5e7eb;background:#f3f0ff;color:#7c3aed;";
+    tr.appendChild(tdTotal);
+    tbody.appendChild(tr);
+  });
+
+  // 합계 행
+  if (bpList.length > 0) {
+    const trSum = document.createElement("tr");
+    trSum.style.background = "#ede9fe";
+    const tdLabel = document.createElement("td");
+    tdLabel.textContent = "합계";
+    tdLabel.style.cssText = "padding:8px 12px;font-weight:700;font-size:13px;border-top:2px solid #7c3aed;";
+    trSum.appendChild(tdLabel);
+    let grandTotal = 0;
+    BP_PROCESSES.forEach(proc => {
+      const td = document.createElement("td");
+      td.textContent = colTotals[proc];
+      td.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-top:2px solid #7c3aed;";
+      grandTotal += colTotals[proc];
+      trSum.appendChild(td);
+    });
+    const tdGrand = document.createElement("td");
+    tdGrand.textContent = grandTotal;
+    tdGrand.style.cssText = "padding:8px 12px;text-align:center;font-size:13px;font-weight:700;border-top:2px solid #7c3aed;background:#ddd6fe;color:#5b21b6;";
+    trSum.appendChild(tdGrand);
+    tbody.appendChild(trSum);
+  }
+
+  table.appendChild(tbody);
+}
+
+function refreshBpView() {
+  const summary = computeBpSummary(bpCurrentGroup);
+  renderBpCards(summary);
+  renderBpMatrix(summary);
+}
+
+// 뷰 전환
+function showBpView() {
+  document.getElementById("bpView").style.display = "block";
+  // 메인 카드들 숨기기
+  document.querySelectorAll(".app-shell > .card, .kpis").forEach(el => {
+    el.style.display = "none";
+  });
+  refreshBpView();
+}
+
+function showMainView() {
+  document.getElementById("bpView").style.display = "none";
+  document.querySelectorAll(".app-shell > .card, .kpis").forEach(el => {
+    el.style.display = "";
+  });
+}
+
+// 이벤트 연결 (DOM 로드 후 실행)
+document.addEventListener("DOMContentLoaded", function () {
+  // BP사 현황 버튼
+  const bpViewBtn = document.getElementById("bpViewBtn");
+  if (bpViewBtn) bpViewBtn.addEventListener("click", showBpView);
+
+  // 메인으로 버튼
+  const bpBackBtn = document.getElementById("bpBackBtn");
+  if (bpBackBtn) bpBackBtn.addEventListener("click", showMainView);
+
+  // PSK / PSKH / 전체 필터 버튼
+  const filterBtns = document.querySelectorAll(".bp-filter-btn");
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", function () {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      this.classList.add("active");
+      bpCurrentGroup = this.dataset.group;
+      refreshBpView();
+    });
+  });
+});
+// ═══ BP사 현황 끝 ═══════════════════════════════════════════
   loadData();
 })();
