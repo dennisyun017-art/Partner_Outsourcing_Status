@@ -605,17 +605,34 @@
     const myPartner = getMyPartner();
     const source = getBpSource(group);
     const summary = {};
+
     source.forEach(row => {
-      BP_PROCESSES.forEach(proc => {
-        const bp = String(row[proc] || "").trim();
-        if (!bp) return;
-        if (myPartner && bp !== myPartner) return;
-        if (!summary[bp]) {
-          summary[bp] = {};
-          BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
-        }
-        summary[bp][proc]++;
-      });
+      // partner 계정이면: 내가 하나라도 포함된 LOT인지 먼저 확인
+      if (myPartner) {
+        const isMyLot = BP_PROCESSES.some(p => String(row[p] || "").trim() === myPartner);
+        if (!isMyLot) return; // 내 LOT이 아니면 스킵
+        // 내 LOT이면 해당 row의 모든 공정 BP사 집계
+        BP_PROCESSES.forEach(proc => {
+          const bp = String(row[proc] || "").trim();
+          if (!bp) return;
+          if (!summary[bp]) {
+            summary[bp] = {};
+            BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
+          }
+          summary[bp][proc]++;
+        });
+      } else {
+        // admin/manager: 전체 집계
+        BP_PROCESSES.forEach(proc => {
+          const bp = String(row[proc] || "").trim();
+          if (!bp) return;
+          if (!summary[bp]) {
+            summary[bp] = {};
+            BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
+          }
+          summary[bp][proc]++;
+        });
+      }
     });
     return summary;
   }
