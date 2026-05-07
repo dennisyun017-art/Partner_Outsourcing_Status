@@ -658,7 +658,9 @@ if (!ordered.length) {
     return;
   }
 
-  const CARD_COLORS = [
+const CARD_COLORS = [
+    "#7C3AED","#1D9E75","#D85A30","#378ADD","#BA7517","#D4537E","#6B7280"
+  ];
 
   ordered.forEach((bp, idx) => {
     const data = summary[bp];
@@ -705,10 +707,11 @@ function renderBpMatrix(summary) {
   const table = document.getElementById("bpMatrix");
   table.innerHTML = "";
   const allBp = Object.keys(summary).filter(bp => bp && bp !== "-");
-  const bpList = [
+  const ordered = [
     ...BP_ORDER.filter(bp => allBp.includes(bp)),
     ...allBp.filter(bp => !BP_ORDER.includes(bp)).sort()
   ];
+  const bpList = ordered;
 
   // 헤더 행
   const thead = document.createElement("thead");
