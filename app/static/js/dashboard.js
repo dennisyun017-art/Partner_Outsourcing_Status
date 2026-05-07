@@ -835,6 +835,83 @@ function showMainView() {
     });
   }
 })();
+// ═══ PDF 인쇄 ═══════════════════════════════════════════════
+
+// 메인 대시보드 인쇄용 전체 테이블 생성
+function buildPrintTable() {
+  const container = document.getElementById("printTable");
+  container.innerHTML = "";
+
+  // 제목 헤더
+  const title = document.createElement("div");
+  title.style.cssText = "margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #7c3aed;";
+  title.innerHTML = `
+    <div style="font-size:16px;font-weight:700;color:#7c3aed;">Partner Outsourcing Status</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:4px;">
+      기준일: ${TODAY_STR} &nbsp;|&nbsp; 총 ${filteredData.length}건
+      &nbsp;|&nbsp; 조립중: ${filteredData.filter(r=>r["상태"]==="조립중").length}건
+      &nbsp;|&nbsp; Tuning중: ${filteredData.filter(r=>r["상태"]==="Tuning중").length}건
+      &nbsp;|&nbsp; 출력일시: ${new Date().toLocaleString("ko-KR")}
+    </div>
+  `;
+  container.appendChild(title);
+
+  // 출력할 컬럼 (Remark 제외, 가로 공간 절약)
+  const printCols = getVisibleColumns().filter(c => c !== "Remark");
+
+  const table = document.createElement("table");
+  // 헤더
+  const thead = document.createElement("thead");
+  const hRow = document.createElement("tr");
+  printCols.forEach(col => {
+    const th = document.createElement("th");
+    th.textContent = col;
+    hRow.appendChild(th);
+  });
+  thead.appendChild(hRow);
+  table.appendChild(thead);
+
+  // 데이터 전체
+  const tbody = document.createElement("tbody");
+  filteredData.forEach((rowData, idx) => {
+    const tr = document.createElement("tr");
+    printCols.forEach(col => {
+      const td = document.createElement("td");
+      td.textContent = rowData[col] || "";
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  container.appendChild(table);
+}
+
+function printMainDashboard() {
+  buildPrintTable();
+  document.getElementById("printTable").style.display = "block";
+  // 메인 테이블 영역 숨기기
+  const tableCard = document.querySelector(".card:has(#tableScroll)");
+  if (tableCard) tableCard.style.display = "none";
+  window.print();
+  // 복원
+  document.getElementById("printTable").style.display = "none";
+  if (tableCard) tableCard.style.display = "";
+}
+
+function printBpDashboard() {
+  window.print();
+}
+
+// PDF 버튼 이벤트
+(function initPrintEvents() {
+  const mainPdfBtn = document.getElementById("mainPdfBtn");
+  if (mainPdfBtn) mainPdfBtn.addEventListener("click", printMainDashboard);
+
+  const bpPdfBtn = document.getElementById("bpPdfBtn");
+  if (bpPdfBtn) bpPdfBtn.addEventListener("click", printBpDashboard);
+})();
+
+// ═══ PDF 인쇄 끝 ═══════════════════════════════════════════
 // ═══ BP사 현황 끝 ═══════════════════════════════════════════
   loadData();
 })();
