@@ -601,35 +601,55 @@
     });
   }
 
+  // MO처럼 Tuning 전담 BP사 목록 (이 BP사가 Tuning이면 조립 BP사 카드에 포함)
+  const TUNING_ONLY_BPS = ["MO", "M-FAB"];
+
   function computeBpSummary(group) {
     const myPartner = getMyPartner();
     const source = getBpSource(group);
     const summary = {};
 
+    // summary 초기화 헬퍼
+    function ensureBp(bp) {
+      if (!summary[bp]) {
+        summary[bp] = {};
+        BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
+      }
+    }
+
     source.forEach(row => {
-      // partner 계정이면: 내가 하나라도 포함된 LOT인지 먼저 확인
       if (myPartner) {
-        const isMyLot = BP_PROCESSES.some(p => String(row[p] || "").trim() === myPartner);
-        if (!isMyLot) return; // 내 LOT이 아니면 스킵
-        // 내 LOT이면 해당 row의 모든 공정 BP사 집계
-        BP_PROCESSES.forEach(proc => {
+        // partner 계정: 내가 조립 공정(EFEM~Harness)에 포함된 LOT만
+        const assemblyProcs = BP_PROCESSES.filter(p => p !== "Tuning");
+        const isMyLot = assemblyProcs.some(p => String(row[p] || "").trim() === myPartner);
+        if (!isMyLot) return;
+
+        // 내 조립 공정 집계
+        assemblyProcs.forEach(proc => {
           const bp = String(row[proc] || "").trim();
-          if (!bp) return;
-          if (!summary[bp]) {
-            summary[bp] = {};
-            BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
-          }
-          summary[bp][proc]++;
+          if (bp !== myPartner) return;
+          ensureBp(myPartner);
+          summary[myPartner][proc]++;
         });
+
+        // Tuning이 MO/M-FAB 등 외주 Tuning BP사면 → 내 카드의 Tuning에 포함
+        const tuningBp = String(row["Tuning"] || "").trim();
+        if (tuningBp && TUNING_ONLY_BPS.includes(tuningBp)) {
+          ensureBp(myPartner);
+          summary[myPartner]["Tuning"]++;
+        }
+        // Tuning이 내 BP사 이름이면 그대로 집계
+        if (tuningBp === myPartner) {
+          ensureBp(myPartner);
+          summary[myPartner]["Tuning"]++;
+        }
+
       } else {
         // admin/manager: 전체 집계
         BP_PROCESSES.forEach(proc => {
           const bp = String(row[proc] || "").trim();
           if (!bp) return;
-          if (!summary[bp]) {
-            summary[bp] = {};
-            BP_PROCESSES.forEach(p => { summary[bp][p] = 0; });
-          }
+          ensureBp(bp);
           summary[bp][proc]++;
         });
       }
