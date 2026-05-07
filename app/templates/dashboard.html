@@ -21,8 +21,8 @@
       <div class="user-box">
         <span id="userBadge" class="badge"></span>
         <a class="btn btn-stage" href="/stage">Stage 현황 보기</a>
-        <button class="btn btn-secondary" id="mainPdfBtn" type="button">📄 PDF 저장</button>
         <button class="btn btn-secondary" id="bpViewBtn" type="button">BP사 현황 보기</button>
+        <button class="btn btn-secondary" id="mainPdfBtn" type="button">📄 PDF 저장</button>
         <a class="btn btn-secondary" href="/account/password">비밀번호 변경</a>
         {% if current_user.role in ['admin', 'manager'] %}
         <button class="btn btn-secondary" id="reloadBtn" type="button">데이터 재로딩</button>
