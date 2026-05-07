@@ -122,7 +122,17 @@
     <button class="bp-filter-btn" data-group="PSKH">PSKH (HC*)</button>
   </div>
   <input id="bpLotFilter" type="text" placeholder="Lot 번호 입력..."
-    style="padding:5px 12px;border:1px solid #d1d5db;border-radius:20px;font-size:13px;width:180px;outline:none;" />
+    style="padding:5px 12px;border:1px solid #d1d5db;border-radius:20px;font-size:13px;width:160px;outline:none;" />
+  <div style="display:flex; align-items:center; gap:6px;">
+    <span style="font-size:12px;color:#6b7280;">생산시작일</span>
+    <input id="bpDateFrom" type="date"
+      style="padding:4px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;" />
+    <span style="font-size:12px;color:#6b7280;">~</span>
+    <input id="bpDateTo" type="date"
+      style="padding:4px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;" />
+    <button id="bpDateReset" type="button"
+      style="padding:4px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;color:#6b7280;cursor:pointer;">초기화</button>
+  </div>
 </div>
       <button class="btn btn-secondary" id="bpPdfBtn" type="button">📄 PDF 저장</button>
       <button class="btn btn-secondary" id="bpBackBtn" type="button" style="margin-left:auto;">← 메인으로</button>
