@@ -635,12 +635,12 @@
         const tuningBp = String(row["Tuning"] || "").trim();
         if (tuningBp) {
           if (TUNING_ONLY_BPS.includes(tuningBp)) {
-            // MO/M-FAB 등: Tuning=MO인 LOT의 조립 공정 BP사를 MO 카드에 집계
+            // MO/M-FAB 등: Tuning=MO인 LOT에서 내가(myPartner) 담당한 공정만 MO 카드에 집계
             ensureBp(tuningBp);
             const assemblyProcs2 = BP_PROCESSES.filter(p => p !== "Tuning");
             assemblyProcs2.forEach(proc => {
               const bp = String(row[proc] || "").trim();
-              if (!bp) return;
+              if (bp !== myPartner) return; // 내 공정만
               summary[tuningBp][proc]++;
             });
           } else if (tuningBp === myPartner) {
